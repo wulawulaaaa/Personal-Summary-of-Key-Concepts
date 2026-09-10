@@ -1,0 +1,1461 @@
+<!doctype html>
+<html lang="zh-CN">
+ <head> 
+  <meta charset="utf-8"> 
+  <link rel="canonical" href="https://blog.csdn.net/qq_39698985/article/details/145714028"> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+  <meta name="renderer" content="webkit"> 
+  <meta name="force-rendering" content="webkit"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+  <meta name="report" content="{&quot;pid&quot;: &quot;blog&quot;, &quot;spm&quot;:&quot;1001.2101&quot;}"> 
+  <meta name="referrer" content="always"> 
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+  <link rel="alternate" media="handheld" href="#">  
+  <meta name="applicable-device" content="pc"> 
+  <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"> 
+  <title>vLLM专题（九）- 量化_vllm 量化-CSDN博客</title>   
+  <meta name="keywords" content="vllm 量化"> 
+  <meta name="csdn-baidu-search" content="{&quot;autorun&quot;:true,&quot;install&quot;:true,&quot;keyword&quot;:&quot;vllm 量化&quot;}"> 
+  <meta name="description" content="文章浏览阅读355次。因此，在此模式下，延迟改进是有限的。FP8模型将在计算能力大于8.0的GPU（Ampere）上运行，作为仅权重的W8A16，利用FP8 Marlin。您的模型检查点，包含量化后的权重和激活值，应位于Meta-Llama-3-8B-Instruct-FP8/。然而，由于其较小的动态范围（±240.0），E4M3通常需要与每个量化张量一起使用更高精度（FP32）的缩放因子。然而，由于其较小的动态范围（±240.0），E4M3通常需要与每个量化张量一起使用更高精度（FP32）的缩放因子。_vllm 量化"> 
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-5b2b1521a0.min.css"> 
+  <style>
+        #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+    </style>  
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin-yellow/skin-yellow-28d34ab5fa.min.css">    
+  <meta name="toolbar" content="{&quot;type&quot;:&quot;0&quot;,&quot;fixModel&quot;:&quot;1&quot;}">    
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css"> 
+  <style>
+        .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+    </style>      
+ 	<style>
+	main div.blog-content-box pre {
+		max-height: 100%;
+		overflow-y: hidden;
+	}
+	</style>
+ </head>  
+ <body class="nodata  " style=""> 
+  <div id="toolbarBox" style="min-height: 48px;"></div>    
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css"> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css"> 
+  <link rel="stylesheet" href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css">   
+  <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;"> 
+   <div class="container clearfix container-concision" id="mainBox">  
+    <main>  
+     <div class="blog-content-box"> 
+      <div class="article-header-box"> 
+       <div class="article-header"> 
+        <div class="article-title-box"> 
+         <h1 class="title-article" id="articleContentId">vLLM专题（九）- 量化</h1> 
+        </div>  
+       </div> 
+      </div> 
+      <div id="blogHuaweiyunAdvert" class=""></div> 
+      <div id="blogColumnPayAdvert" class=""> 
+       <div class="column-group"> 
+        <div class="column-group-item column-group0 column-group-item-one"> 
+         <div class="item-l"> 
+          <a class="item-target" href="https://blog.csdn.net/qq_39698985/category_12112329.html" target="_blank" title="大模型专题系列" data-report-view="{&quot;spm&quot;:&quot;1001.2101.3001.6332&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.6332&quot;}"> <img class="item-target" src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_224,w_224" alt=""> <span class="title item-target"> <span> <span class="tit">大模型专题系列</span> <span class="dec">专栏收录该内容</span> </span> </span> </a> 
+         </div> 
+         <div class="item-m"> 
+          <span>111 篇文章</span> 
+          <span class="old-add-new-box"> <span class="price">¥49.90</span> <span class="oldprice">¥99.00</span> </span> 
+         </div> 
+         <div class="item-r"> 
+          <a class="item-target article-column-subscribe">已订阅 </a> 
+          <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-view="{&quot;spm&quot;:&quot;1001.2015.3001.8590&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2015.3001.8590&quot;}">8折续费 </a> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="learning_the_member_box"> 
+       <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank"> 
+        <div class="left">
+         <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png" alt="">
+         <span>您已是超级会员，正在免费阅读会员专享内容</span>
+        </div> 
+        <div class="right">
+         <span>查看更多超级会员权益</span>
+         <img src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png" alt="">
+        </div> </a> 
+      </div> 
+      <article class="baidu_pl"> 
+       <div id="article_content" class="article_content clearfix"> 
+        <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css"> 
+        <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-8d6d398833.css"> 
+        <div id="content_views" class="markdown_views prism-dracula"> 
+         <svg xmlns="http://www.w3.org/2000/svg" style="display: none;"> 
+          <path stroke-linecap="round" d="M5,0 0,2.5 5,5z" id="raphael-marker-block" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path> 
+         </svg> 
+         <h2><a id="1_0"></a>1.支持的硬件</h2> 
+         <p>下表展示了 vLLM 中各种量化实现与不同硬件平台的兼容性：<br> <img src="https://i-blog.csdnimg.cn/direct/f6e698f58b1748088e3138b030c69726.png" alt="在这里插入图片描述"><br> Volta 指 SM 7.0，Turing 指 SM 7.5，Ampere 指 SM 8.0/8.6，Ada 指 SM 8.9，Hopper 指 SM 9.0。</p> 
+         <p>✅︎ 表示量化方法在指定硬件上受支持。</p> 
+         <p>❌ 表示量化方法在指定硬件上不受支持。</p> 
+         <blockquote> 
+          <p><strong>注意</strong><br> 此兼容性图表可能会随着 vLLM 的不断发展和对不同硬件平台及量化方法的支持扩展而发生变化。<br> 有关硬件支持和量化方法的最新信息，请参考 <code>vllm/model_executor/layers/quantization</code > 或咨询 vLLM 开发团队。</p> 
+         </blockquote> 
+         <h2><a id="2__AWQAutoAWQ_11"></a>2. 自动 AWQ（AutoAWQ）</h2> 
+         <p>要创建一个新的 4 位量化模型，您可以利用 AutoAWQ。量化将模型的精度从 FP16 降低到 INT4，从而有效减少约 70% 的文件大小。主要优势是降低延迟和内存使用。</p> 
+         <p>您可以通过安装 AutoAWQ 或选择 Huggingface 上的 400 多个模型之一来量化自己的模型。</p> 
+         <pre><code class="prism language-bash">pip <span class="token function">install</span> autoawq
+</code ></pre> 
+         <p>安装 AutoAWQ 后，您就可以开始量化模型了。以下是如何量化 <code>mistralai/Mistral-7B-Instruct-v0.2</code > 的示例：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python"><span class="token keyword">from</span> awq <span class="token keyword">import</span> AutoAWQForCausalLM
+<span class="token keyword">from</span> transformers <span class="token keyword">import</span> AutoTokenizer
+
+model_path <span class="token operator">=</span> <span class="token string">'mistralai/Mistral-7B-Instruct-v0.2'</span>
+quant_path <span class="token operator">=</span> <span class="token string">'mistral-instruct-v0.2-awq'</span>
+quant_config <span class="token operator">=</span> <span class="token punctuation">{
+            <!-- --></span> <span class="token string">"zero_point"</span><span class="token punctuation">:</span> <span class="token boolean">True</span><span class="token punctuation">,</span> <span class="token string">"q_group_size"</span><span class="token punctuation">:</span> <span class="token number">128</span><span class="token punctuation">,</span> <span class="token string">"w_bit"</span><span class="token punctuation">:</span> <span class="token number">4</span><span class="token punctuation">,</span> <span class="token string">"version"</span><span class="token punctuation">:</span> <span class="token string">"GEMM"</span> <span class="token punctuation">}</span>
+
+<span class="token comment"># Load model</span>
+model <span class="token operator">=</span> AutoAWQForCausalLM<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>
+    model_path<span class="token punctuation">,</span> <span class="token operator">**</span><span class="token punctuation">{
+            <!-- --></span><span class="token string">"low_cpu_mem_usage"</span><span class="token punctuation">:</span> <span class="token boolean">True</span><span class="token punctuation">,</span> <span class="token string">"use_cache"</span><span class="token punctuation">:</span> <span class="token boolean">False</span><span class="token punctuation">}</span>
+<span class="token punctuation">)</span>
+tokenizer <span class="token operator">=</span> AutoTokenizer<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>model_path<span class="token punctuation">,</span> trust_remote_code<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+
+<span class="token comment"># Quantize</span>
+model<span class="token punctuation">.</span>quantize<span class="token punctuation">(</span>tokenizer<span class="token punctuation">,</span> quant_config<span class="token operator">=</span>quant_config<span class="token punctuation">)</span>
+
+<span class="token comment"># Save quantized model</span>
+model<span class="token punctuation">.</span>save_quantized<span class="token punctuation">(</span>quant_path<span class="token punctuation">)</span>
+tokenizer<span class="token punctuation">.</span>save_pretrained<span class="token punctuation">(</span>quant_path<span class="token punctuation">)</span>
+
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f'Model is quantized and saved at "</span><span class="token interpolation"><span class="token punctuation">{
+              <!-- --></span>quant_path<span class="token punctuation">}</span></span><span class="token string">"'</span></span><span class="token punctuation">)</span>
+</code ></pre> 
+         <p>要使用 vLLM 运行 AWQ 模型，您可以使用 <code>TheBloke/Llama-2-7b-Chat-AWQ</code >，并执行以下命令：</p> 
+         <pre><code class="prism language-python">python examples<span class="token operator">/</span>offline_inference<span class="token operator">/</span>llm_engine_example<span class="token punctuation">.</span>py <span class="token operator">-</span><span class="token operator">-</span>model TheBloke<span class="token operator">/</span>Llama<span class="token operator">-</span><span class="token number">2</span><span class="token operator">-</span>7b<span class="token operator">-</span>Chat<span class="token operator">-</span>AWQ <span class="token operator">-</span><span class="token operator">-</span>quantization awq
+</code ></pre> 
+         <p>AWQ模型也可以通过LLM入口点直接支持。</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python"><span class="token keyword">from</span> vllm <span class="token keyword">import</span> LLM<span class="token punctuation">,</span> SamplingParams
+
+<span class="token comment"># Sample prompts.</span>
+prompts <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token string">"Hello, my name is"</span><span class="token punctuation">,</span>
+    <span class="token string">"The president of the United States is"</span><span class="token punctuation">,</span>
+    <span class="token string">"The capital of France is"</span><span class="token punctuation">,</span>
+    <span class="token string">"The future of AI is"</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+<span class="token comment"># Create a sampling params object.</span>
+sampling_params <span class="token operator">=</span> SamplingParams<span class="token punctuation">(</span>temperature<span class="token operator">=</span><span class="token number">0.8</span><span class="token punctuation">,</span> top_p<span class="token operator">=</span><span class="token number">0.95</span><span class="token punctuation">)</span>
+
+<span class="token comment"># Create an LLM.</span>
+llm <span class="token operator">=</span> LLM<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"TheBloke/Llama-2-7b-Chat-AWQ"</span><span class="token punctuation">,</span> quantization<span class="token operator">=</span><span class="token string">"AWQ"</span><span class="token punctuation">)</span>
+<span class="token comment"># Generate texts from the prompts. The output is a list of RequestOutput objects</span>
+<span class="token comment"># that contain the prompt, generated text, and other information.</span>
+outputs <span class="token operator">=</span> llm<span class="token punctuation">.</span>generate<span class="token punctuation">(</span>prompts<span class="token punctuation">,</span> sampling_params<span class="token punctuation">)</span>
+<span class="token comment"># Print the outputs.</span>
+<span class="token keyword">for</span> output <span class="token keyword">in</span> outputs<span class="token punctuation">:</span>
+    prompt <span class="token operator">=</span> output<span class="token punctuation">.</span>prompt
+    generated_text <span class="token operator">=</span> output<span class="token punctuation">.</span>outputs<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>text
+    <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Prompt: </span><span class="token interpolation"><span class="token punctuation">{
+              <!-- --></span>prompt<span class="token conversion-option punctuation">!r</span><span class="token punctuation">}</span></span><span class="token string">, Generated text: </span><span class="token interpolation"><span class="token punctuation">{
+              <!-- --></span>generated_text<span class="token conversion-option punctuation">!r</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+</code ></pre> 
+         <h2><a id="3_BitsAndBytes_71"></a>3. BitsAndBytes</h2> 
+         <p>vLLM现在支持BitsAndBytes，以实现更高效的模型推理。BitsAndBytes通过量化模型来减少内存使用并提高性能，同时不会显著牺牲准确性。与其他量化方法相比，BitsAndBytes无需通过输入数据对量化模型进行校准。</p> 
+         <p>以下是使用vLLM与BitsAndBytes的步骤。</p> 
+         <pre><code class="prism language-bash">pip <span class="token function">install</span> bitsandbytes<span class="token operator">&gt;=</span><span class="token number">0.45</span>.0
+</code ></pre> 
+         <p>vLLM读取模型的配置文件，支持实时量化和预量化检查点。</p> 
+         <p>您可以在 <a href="https://huggingface.co/models?other=bitsandbytes" rel="nofollow">https://huggingface.co/models?other=bitsandbytes</a> 上找到bitsandbytes量化的模型。通常，这些仓库会有一个config.json文件，其中包含quantization_config部分。</p> 
+         <h3><a id="31__81"></a>3.1. 读取量化检查点</h3> 
+         <pre><code class="prism language-python"><span class="token keyword">from</span> vllm <span class="token keyword">import</span> LLM
+<span class="token keyword">import</span> torch
+<span class="token comment"># unsloth/tinyllama-bnb-4bit is a pre-quantized checkpoint.</span>
+model_id <span class="token operator">=</span> <span class="token string">"unsloth/tinyllama-bnb-4bit"</span>
+llm <span class="token operator">=</span> LLM<span class="token punctuation">(</span>model<span class="token operator">=</span>model_id<span class="token punctuation">,</span> dtype<span class="token operator">=</span>torch<span class="token punctuation">.</span>bfloat16<span class="token punctuation">,</span> trust_remote_code<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> \
+quantization<span class="token operator">=</span><span class="token string">"bitsandbytes"</span><span class="token punctuation">,</span> load_format<span class="token operator">=</span><span class="token string">"bitsandbytes"</span><span class="token punctuation">)</span>
+</code ></pre> 
+         <h3><a id="32_4_90"></a>3.2. 实时量化：加载为4位量化</h3> 
+         <pre><code class="prism language-python"><span class="token keyword">from</span> vllm <span class="token keyword">import</span> LLM
+<span class="token keyword">import</span> torch
+model_id <span class="token operator">=</span> <span class="token string">"huggyllama/llama-7b"</span>
+llm <span class="token operator">=</span> LLM<span class="token punctuation">(</span>model<span class="token operator">=</span>model_id<span class="token punctuation">,</span> dtype<span class="token operator">=</span>torch<span class="token punctuation">.</span>bfloat16<span class="token punctuation">,</span> trust_remote_code<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> \
+quantization<span class="token operator">=</span><span class="token string">"bitsandbytes"</span><span class="token punctuation">,</span> load_format<span class="token operator">=</span><span class="token string">"bitsandbytes"</span><span class="token punctuation">)</span>
+</code ></pre> 
+         <h3><a id="33_OpenAI_98"></a>3.3. OpenAI兼容服务器</h3> 
+         <p>将以下内容附加到您的4位模型参数中：</p> 
+         <pre><code class="prism language-bash"><span class="token parameter variable">--quantization</span> bitsandbytes --load-format bitsandbytes
+</code ></pre> 
+         <h2><a id="4_GGUF_103"></a>4. GGUF</h2> 
+         <blockquote> 
+          <p><strong>警告</strong><br> 请注意，vLLM中的GGUF支持目前仍处于高度实验阶段，且尚未经过优化，可能与其他功能不兼容。目前，您可以使用GGUF来减少内存占用。如果遇到任何问题，请向vLLM团队报告。</p> 
+         </blockquote> 
+         <blockquote> 
+          <p><strong>警告</strong><br> 目前，vLLM仅支持加载单文件GGUF模型。如果您有多个文件的GGUF模型，您可以使用gguf-split工具将它们合并为单文件模型。</p> 
+         </blockquote> 
+         <p>要使用vLLM运行GGUF模型，您可以下载并使用来自TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF的本地GGUF模型，使用以下命令：</p> 
+         <pre><code class="prism language-bash"><span class="token function">wget</span> https://huggingface.co/TheBloke/TinyLlama-1.1B-Chat-v1.0-GGUF/resolve/main/tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf
+<span class="token comment"># We recommend using the tokenizer from base model to avoid long-time and buggy tokenizer conversion.</span>
+vllm serve ./tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf <span class="token parameter variable">--tokenizer</span> TinyLlama/TinyLlama-1.1B-Chat-v1.0
+</code ></pre> 
+         <p>您还可以添加 <code>--tensor-parallel-size 2</code > 来启用使用2个GPU的张量并行推理：</p> 
+         <pre><code># We recommend using the tokenizer from base model to avoid long-time and buggy tokenizer conversion.
+vllm serve ./tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf --tokenizer TinyLlama/TinyLlama-1.1B-Chat-v1.0 --tensor-parallel-size 2
+</code ></pre> 
+         <blockquote> 
+          <p><strong>警告</strong><br> 我们建议使用基础模型的分词器，而不是GGUF模型。因为从GGUF转换分词器既耗时又不稳定，尤其是对于一些词汇量较大的模型。</p> 
+         </blockquote> 
+         <p>您也可以通过LLM入口点直接使用GGUF模型：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python"><span class="token keyword">from</span> vllm <span class="token keyword">import</span> LLM<span class="token punctuation">,</span> SamplingParams
+
+<span class="token comment"># In this script, we demonstrate how to pass input to the chat method:</span>
+conversation <span class="token operator">=</span> <span class="token punctuation">[</span>
+   <span class="token punctuation">{
+            <!-- --></span>
+      <span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"system"</span><span class="token punctuation">,</span>
+      <span class="token string">"content"</span><span class="token punctuation">:</span> <span class="token string">"You are a helpful assistant"</span>
+   <span class="token punctuation">}</span><span class="token punctuation">,</span>
+   <span class="token punctuation">{
+            <!-- --></span>
+      <span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span>
+      <span class="token string">"content"</span><span class="token punctuation">:</span> <span class="token string">"Hello"</span>
+   <span class="token punctuation">}</span><span class="token punctuation">,</span>
+   <span class="token punctuation">{
+            <!-- --></span>
+      <span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"assistant"</span><span class="token punctuation">,</span>
+      <span class="token string">"content"</span><span class="token punctuation">:</span> <span class="token string">"Hello! How can I assist you today?"</span>
+   <span class="token punctuation">}</span><span class="token punctuation">,</span>
+   <span class="token punctuation">{
+            <!-- --></span>
+      <span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span>
+      <span class="token string">"content"</span><span class="token punctuation">:</span> <span class="token string">"Write an essay about the importance of higher education."</span><span class="token punctuation">,</span>
+   <span class="token punctuation">}</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+
+<span class="token comment"># Create a sampling params object.</span>
+sampling_params <span class="token operator">=</span> SamplingParams<span class="token punctuation">(</span>temperature<span class="token operator">=</span><span class="token number">0.8</span><span class="token punctuation">,</span> top_p<span class="token operator">=</span><span class="token number">0.95</span><span class="token punctuation">)</span>
+
+<span class="token comment"># Create an LLM.</span>
+llm <span class="token operator">=</span> LLM<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"./tinyllama-1.1b-chat-v1.0.Q4_K_M.gguf"</span><span class="token punctuation">,</span>
+         tokenizer<span class="token operator">=</span><span class="token string">"TinyLlama/TinyLlama-1.1B-Chat-v1.0"</span><span class="token punctuation">)</span>
+<span class="token comment"># Generate texts from the prompts. The output is a list of RequestOutput objects</span>
+<span class="token comment"># that contain the prompt, generated text, and other information.</span>
+outputs <span class="token operator">=</span> llm<span class="token punctuation">.</span>chat<span class="token punctuation">(</span>conversation<span class="token punctuation">,</span> sampling_params<span class="token punctuation">)</span>
+
+<span class="token comment"># Print the outputs.</span>
+<span class="token keyword">for</span> output <span class="token keyword">in</span> outputs<span class="token punctuation">:</span>
+   prompt <span class="token operator">=</span> output<span class="token punctuation">.</span>prompt
+   generated_text <span class="token operator">=</span> output<span class="token punctuation">.</span>outputs<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>text
+   <span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Prompt: </span><span class="token interpolation"><span class="token punctuation">{
+              <!-- --></span>prompt<span class="token conversion-option punctuation">!r</span><span class="token punctuation">}</span></span><span class="token string">, Generated text: </span><span class="token interpolation"><span class="token punctuation">{
+              <!-- --></span>generated_text<span class="token conversion-option punctuation">!r</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+</code ></pre> 
+         <h2><a id="5_INT4_W4A16_164"></a>5. INT4 W4A16</h2> 
+         <p>vLLM支持将权重量化为INT4，以节省内存并加速推理。这种量化方法特别适用于减少模型大小，并在每秒查询量（QPS）较低的工作负载中保持低延迟。</p> 
+         <p>请访问HF集合，查看适用于vLLM的流行LLM的量化INT4检查点，随时使用。</p> 
+         <blockquote> 
+          <p><strong>注意</strong><br> INT4计算仅在计算能力大于8.0的NVIDIA GPU上支持（如Ampere、Ada Lovelace、Hopper、Blackwell）。</p> 
+         </blockquote> 
+         <h3><a id="51__171"></a>5.1. 前提条件</h3> 
+         <p>要在vLLM中使用INT4量化，您需要安装llm-compressor库：</p> 
+         <pre><code class="prism language-bash">pip <span class="token function">install</span> llmcompressor
+</code ></pre> 
+         <h3><a id="52__176"></a>5.2. 量化过程</h3> 
+         <p>量化过程包括四个主要步骤：</p> 
+         <ol>
+          <li>加载模型</li>
+          <li>准备校准数据</li>
+          <li>应用量化</li>
+          <li>在vLLM中评估准确性</li>
+         </ol> 
+         <h4><a id="521__183"></a>5.2.1 加载模型</h4> 
+         <p>使用标准的transformers AutoModel类加载您的模型和分词器：</p> 
+         <pre><code class="prism language-python"><span class="token keyword">from</span> transformers <span class="token keyword">import</span> AutoTokenizer<span class="token punctuation">,</span> AutoModelForCausalLM
+
+MODEL_ID <span class="token operator">=</span> <span class="token string">"meta-llama/Meta-Llama-3-8B-Instruct"</span>
+model <span class="token operator">=</span> AutoModelForCausalLM<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>
+    MODEL_ID<span class="token punctuation">,</span> device_map<span class="token operator">=</span><span class="token string">"auto"</span><span class="token punctuation">,</span> torch_dtype<span class="token operator">=</span><span class="token string">"auto"</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+tokenizer <span class="token operator">=</span> AutoTokenizer<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>MODEL_ID<span class="token punctuation">)</span>
+</code ></pre> 
+         <h4><a id="522__194"></a>5.2.2 准备校准数据</h4> 
+         <p>在将权重量化为INT4时，您需要样本数据来估计权重更新和校准的缩放因子。最好使用与您的部署数据相匹配的校准数据。对于通用指令调优模型，您可以使用像ultrachat这样的数据集：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python"><span class="token keyword">from</span> datasets <span class="token keyword">import</span> load_dataset
+
+NUM_CALIBRATION_SAMPLES <span class="token operator">=</span> <span class="token number">512</span>
+MAX_SEQUENCE_LENGTH <span class="token operator">=</span> <span class="token number">2048</span>
+
+<span class="token comment"># Load and preprocess the dataset</span>
+ds <span class="token operator">=</span> load_dataset<span class="token punctuation">(</span><span class="token string">"HuggingFaceH4/ultrachat_200k"</span><span class="token punctuation">,</span> split<span class="token operator">=</span><span class="token string">"train_sft"</span><span class="token punctuation">)</span>
+ds <span class="token operator">=</span> ds<span class="token punctuation">.</span>shuffle<span class="token punctuation">(</span>seed<span class="token operator">=</span><span class="token number">42</span><span class="token punctuation">)</span><span class="token punctuation">.</span>select<span class="token punctuation">(</span><span class="token builtin">range</span><span class="token punctuation">(</span>NUM_CALIBRATION_SAMPLES<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">preprocess</span><span class="token punctuation">(</span>example<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{
+            <!-- --></span><span class="token string">"text"</span><span class="token punctuation">:</span> tokenizer<span class="token punctuation">.</span>apply_chat_template<span class="token punctuation">(</span>example<span class="token punctuation">[</span><span class="token string">"messages"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> tokenize<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+ds <span class="token operator">=</span> ds<span class="token punctuation">.</span><span class="token builtin">map</span><span class="token punctuation">(</span>preprocess<span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">tokenize</span><span class="token punctuation">(</span>sample<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> tokenizer<span class="token punctuation">(</span>sample<span class="token punctuation">[</span><span class="token string">"text"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> padding<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span> max_length<span class="token operator">=</span>MAX_SEQUENCE_LENGTH<span class="token punctuation">,</span> truncation<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> add_special_tokens<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+ds <span class="token operator">=</span> ds<span class="token punctuation">.</span><span class="token builtin">map</span><span class="token punctuation">(</span>tokenize<span class="token punctuation">,</span> remove_columns<span class="token operator">=</span>ds<span class="token punctuation">.</span>column_names<span class="token punctuation">)</span>
+</code ></pre> 
+         <h4><a id="523__214"></a>5.2.3 应用量化</h4> 
+         <p>现在，应用量化算法：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python"><span class="token keyword">from</span> llmcompressor<span class="token punctuation">.</span>transformers <span class="token keyword">import</span> oneshot
+<span class="token keyword">from</span> llmcompressor<span class="token punctuation">.</span>modifiers<span class="token punctuation">.</span>quantization <span class="token keyword">import</span> GPTQModifier
+<span class="token keyword">from</span> llmcompressor<span class="token punctuation">.</span>modifiers<span class="token punctuation">.</span>smoothquant <span class="token keyword">import</span> SmoothQuantModifier
+
+<span class="token comment"># Configure the quantization algorithms</span>
+recipe <span class="token operator">=</span> GPTQModifier<span class="token punctuation">(</span>targets<span class="token operator">=</span><span class="token string">"Linear"</span><span class="token punctuation">,</span> scheme<span class="token operator">=</span><span class="token string">"W4A16"</span><span class="token punctuation">,</span> ignore<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">"lm_head"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token comment"># Apply quantization</span>
+oneshot<span class="token punctuation">(</span>
+    model<span class="token operator">=</span>model<span class="token punctuation">,</span>
+    dataset<span class="token operator">=</span>ds<span class="token punctuation">,</span>
+    recipe<span class="token operator">=</span>recipe<span class="token punctuation">,</span>
+    max_seq_length<span class="token operator">=</span>MAX_SEQUENCE_LENGTH<span class="token punctuation">,</span>
+    num_calibration_samples<span class="token operator">=</span>NUM_CALIBRATION_SAMPLES<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment"># Save the compressed model</span>
+SAVE_DIR <span class="token operator">=</span> MODEL_ID<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token string">"-W4A16-G128"</span>
+model<span class="token punctuation">.</span>save_pretrained<span class="token punctuation">(</span>SAVE_DIR<span class="token punctuation">,</span> save_compressed<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+tokenizer<span class="token punctuation">.</span>save_pretrained<span class="token punctuation">(</span>SAVE_DIR<span class="token punctuation">)</span>
+</code ></pre> 
+         <p>这个过程会创建一个W4A16模型，其中权重量化为4位整数。</p> 
+         <h4><a id="524__239"></a>5.2.4 评估准确性</h4> 
+         <p>量化后，您可以在vLLM中加载并运行模型：</p> 
+         <pre><code class="prism language-python"><span class="token keyword">from</span> vllm <span class="token keyword">import</span> LLM
+model <span class="token operator">=</span> LLM<span class="token punctuation">(</span><span class="token string">"./Meta-Llama-3-8B-Instruct-W4A16-G128"</span><span class="token punctuation">)</span>
+</code ></pre> 
+         <p>为了评估准确性，您可以使用lm_eval：</p> 
+         <pre><code>$ lm_eval --model vllm \
+  --model_args pretrained="./Meta-Llama-3-8B-Instruct-W4A16-G128",add_bos_token=true \
+  --tasks gsm8k \
+  --num_fewshot 5 \
+  --limit 250 \
+  --batch_size 'auto'
+</code ></pre> 
+         <blockquote> 
+          <p><strong>注意</strong><br> 量化模型对bos令牌的存在可能较为敏感。运行评估时，请确保包含<code>add_bos_token=True</code >参数。</p> 
+         </blockquote> 
+         <h3><a id="53__256"></a>5.3. 最佳实践</h3> 
+         <ul>
+          <li>从512个样本开始作为校准数据，如果准确性下降，则增加样本量。</li>
+          <li>确保校准数据包含高多样性的样本，以防止过拟合特定的用例。</li>
+          <li>使用2048的序列长度作为起始点。</li>
+          <li>使用模型训练时的聊天模板或指令模板。</li>
+          <li>如果您已对模型进行了微调，可以考虑使用部分训练数据作为校准数据。</li>
+          <li>调整量化算法的关键超参数： 
+           <ul>
+            <li><code>dampening_frac</code > 设置GPTQ算法的影响程度。较低的值可以提高准确性，但可能导致数值不稳定，从而导致算法失败。</li>
+            <li><code>actorder</code > 设置激活顺序。在压缩层权重时，通道量化的顺序非常重要。将<code>actorder="weight"</code > 设置可以在不增加延迟的情况下提高准确性。</li>
+           </ul> </li>
+         </ul> 
+         <p>以下是您可以根据自己的用例调整的量化配方示例：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python"><span class="token keyword">from</span> compressed_tensors<span class="token punctuation">.</span>quantization <span class="token keyword">import</span> <span class="token punctuation">(</span>
+    QuantizationArgs<span class="token punctuation">,</span>
+    QuantizationScheme<span class="token punctuation">,</span>
+    QuantizationStrategy<span class="token punctuation">,</span>
+    QuantizationType<span class="token punctuation">,</span>
+<span class="token punctuation">)</span> 
+recipe <span class="token operator">=</span> GPTQModifier<span class="token punctuation">(</span>
+    targets<span class="token operator">=</span><span class="token string">"Linear"</span><span class="token punctuation">,</span>
+    config_groups<span class="token operator">=</span><span class="token punctuation">{
+            <!-- --></span>
+        <span class="token string">"config_group"</span><span class="token punctuation">:</span> QuantizationScheme<span class="token punctuation">(</span>
+            targets<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">"Linear"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+            weights<span class="token operator">=</span>QuantizationArgs<span class="token punctuation">(</span>
+                num_bits<span class="token operator">=</span><span class="token number">4</span><span class="token punctuation">,</span>
+                <span class="token builtin">type</span><span class="token operator">=</span>QuantizationType<span class="token punctuation">.</span>INT<span class="token punctuation">,</span>
+                strategy<span class="token operator">=</span>QuantizationStrategy<span class="token punctuation">.</span>GROUP<span class="token punctuation">,</span>
+                group_size<span class="token operator">=</span><span class="token number">128</span><span class="token punctuation">,</span>
+                symmetric<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+                dynamic<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span>
+                actorder<span class="token operator">=</span><span class="token string">"weight"</span><span class="token punctuation">,</span>
+            <span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token punctuation">)</span><span class="token punctuation">,</span>
+    <span class="token punctuation">}</span><span class="token punctuation">,</span>
+    ignore<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">"lm_head"</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    update_size<span class="token operator">=</span>NUM_CALIBRATION_SAMPLES<span class="token punctuation">,</span>
+    dampening_frac<span class="token operator">=</span><span class="token number">0.01</span>
+<span class="token punctuation">)</span>
+</code ></pre> 
+         <h3><a id="54__295"></a>5.4. 故障排除与支持</h3> 
+         <p>如果遇到任何问题或有功能请求，请在vllm-project/llm-compressor的GitHub仓库中提交问题。llm-compressor中的完整INT4量化示例可在此处找到。</p> 
+         <h2><a id="6__INT8_W8A8_297"></a>6. INT8 W8A8</h2> 
+         <p>vLLM支持将权重和激活值量化为INT8，以节省内存并加速推理。这种量化方法特别适用于减少模型大小，同时保持良好的性能。</p> 
+         <p>请访问HF集合，查看适用于vLLM的流行LLM的量化INT8检查点。</p> 
+         <blockquote> 
+          <p><strong>注意</strong><br> INT8计算支持在计算能力大于7.5的NVIDIA GPU上（如Turing、Ampere、Ada Lovelace、Hopper、Blackwell）。</p> 
+         </blockquote> 
+         <h3><a id="61__304"></a>6.1. 前提条件</h3> 
+         <p>要在vLLM中使用INT8量化，您需要安装llm-compressor库：</p> 
+         <pre><code class="prism language-bash">pip <span class="token function">install</span> llmcompressor
+</code ></pre> 
+         <h3><a id="62__309"></a>6.2. 量化过程</h3> 
+         <p>量化过程包括四个主要步骤：</p> 
+         <ol>
+          <li>加载模型</li>
+          <li>准备校准数据</li>
+          <li>应用量化</li>
+          <li>在vLLM中评估准确性</li>
+         </ol> 
+         <h4><a id="621__316"></a>6.2.1 加载模型</h4> 
+         <p>使用标准的transformers AutoModel类加载您的模型和分词器：</p> 
+         <pre><code class="prism language-python"><span class="token keyword">from</span> transformers <span class="token keyword">import</span> AutoTokenizer<span class="token punctuation">,</span> AutoModelForCausalLM
+
+MODEL_ID <span class="token operator">=</span> <span class="token string">"meta-llama/Meta-Llama-3-8B-Instruct"</span>
+model <span class="token operator">=</span> AutoModelForCausalLM<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>
+    MODEL_ID<span class="token punctuation">,</span> device_map<span class="token operator">=</span><span class="token string">"auto"</span><span class="token punctuation">,</span> torch_dtype<span class="token operator">=</span><span class="token string">"auto"</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+tokenizer <span class="token operator">=</span> AutoTokenizer<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>MODEL_ID<span class="token punctuation">)</span>
+</code ></pre> 
+         <h4><a id="622__327"></a>6.2.2 准备校准数据</h4> 
+         <p>在将激活值量化为INT8时，您需要样本数据来估计激活缩放因子。最好使用与您的部署数据相匹配的校准数据。对于通用指令调优模型，您可以使用像ultrachat这样的数据集：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python"><span class="token keyword">from</span> datasets <span class="token keyword">import</span> load_dataset
+
+NUM_CALIBRATION_SAMPLES <span class="token operator">=</span> <span class="token number">512</span>
+MAX_SEQUENCE_LENGTH <span class="token operator">=</span> <span class="token number">2048</span>
+
+<span class="token comment"># Load and preprocess the dataset</span>
+ds <span class="token operator">=</span> load_dataset<span class="token punctuation">(</span><span class="token string">"HuggingFaceH4/ultrachat_200k"</span><span class="token punctuation">,</span> split<span class="token operator">=</span><span class="token string">"train_sft"</span><span class="token punctuation">)</span>
+ds <span class="token operator">=</span> ds<span class="token punctuation">.</span>shuffle<span class="token punctuation">(</span>seed<span class="token operator">=</span><span class="token number">42</span><span class="token punctuation">)</span><span class="token punctuation">.</span>select<span class="token punctuation">(</span><span class="token builtin">range</span><span class="token punctuation">(</span>NUM_CALIBRATION_SAMPLES<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">preprocess</span><span class="token punctuation">(</span>example<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token punctuation">{
+            <!-- --></span><span class="token string">"text"</span><span class="token punctuation">:</span> tokenizer<span class="token punctuation">.</span>apply_chat_template<span class="token punctuation">(</span>example<span class="token punctuation">[</span><span class="token string">"messages"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> tokenize<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span><span class="token punctuation">}</span>
+ds <span class="token operator">=</span> ds<span class="token punctuation">.</span><span class="token builtin">map</span><span class="token punctuation">(</span>preprocess<span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">tokenize</span><span class="token punctuation">(</span>sample<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> tokenizer<span class="token punctuation">(</span>sample<span class="token punctuation">[</span><span class="token string">"text"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> padding<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span> max_length<span class="token operator">=</span>MAX_SEQUENCE_LENGTH<span class="token punctuation">,</span> truncation<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> add_special_tokens<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+ds <span class="token operator">=</span> ds<span class="token punctuation">.</span><span class="token builtin">map</span><span class="token punctuation">(</span>tokenize<span class="token punctuation">,</span> remove_columns<span class="token operator">=</span>ds<span class="token punctuation">.</span>column_names<span class="token punctuation">)</span>
+</code ></pre> 
+         <h4><a id="623__347"></a>6.2.3 应用量化</h4> 
+         <p>现在，应用量化算法：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python"><span class="token keyword">from</span> llmcompressor<span class="token punctuation">.</span>transformers <span class="token keyword">import</span> oneshot
+<span class="token keyword">from</span> llmcompressor<span class="token punctuation">.</span>modifiers<span class="token punctuation">.</span>quantization <span class="token keyword">import</span> GPTQModifier
+<span class="token keyword">from</span> llmcompressor<span class="token punctuation">.</span>modifiers<span class="token punctuation">.</span>smoothquant <span class="token keyword">import</span> SmoothQuantModifier
+
+<span class="token comment"># Configure the quantization algorithms</span>
+recipe <span class="token operator">=</span> <span class="token punctuation">[</span>
+    SmoothQuantModifier<span class="token punctuation">(</span>smoothing_strength<span class="token operator">=</span><span class="token number">0.8</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+    GPTQModifier<span class="token punctuation">(</span>targets<span class="token operator">=</span><span class="token string">"Linear"</span><span class="token punctuation">,</span> scheme<span class="token operator">=</span><span class="token string">"W8A8"</span><span class="token punctuation">,</span> ignore<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">"lm_head"</span><span class="token punctuation">]</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+<span class="token punctuation">]</span>
+
+<span class="token comment"># Apply quantization</span>
+oneshot<span class="token punctuation">(</span>
+    model<span class="token operator">=</span>model<span class="token punctuation">,</span>
+    dataset<span class="token operator">=</span>ds<span class="token punctuation">,</span>
+    recipe<span class="token operator">=</span>recipe<span class="token punctuation">,</span>
+    max_seq_length<span class="token operator">=</span>MAX_SEQUENCE_LENGTH<span class="token punctuation">,</span>
+    num_calibration_samples<span class="token operator">=</span>NUM_CALIBRATION_SAMPLES<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment"># Save the compressed model</span>
+SAVE_DIR <span class="token operator">=</span> MODEL_ID<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token string">"-W8A8-Dynamic-Per-Token"</span>
+model<span class="token punctuation">.</span>save_pretrained<span class="token punctuation">(</span>SAVE_DIR<span class="token punctuation">,</span> save_compressed<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+tokenizer<span class="token punctuation">.</span>save_pretrained<span class="token punctuation">(</span>SAVE_DIR<span class="token punctuation">)</span>
+</code ></pre> 
+         <p>这个过程会创建一个W8A8模型，其中权重和激活值量化为8位整数。</p> 
+         <h4><a id="624__375"></a>6.2.4 评估准确性</h4> 
+         <p>量化后，您可以在vLLM中加载并运行模型：</p> 
+         <pre><code class="prism language-python"><span class="token keyword">from</span> vllm <span class="token keyword">import</span> LLM
+model <span class="token operator">=</span> LLM<span class="token punctuation">(</span><span class="token string">"./Meta-Llama-3-8B-Instruct-W8A8-Dynamic-Per-Token"</span><span class="token punctuation">)</span>
+</code ></pre> 
+         <p>为了评估准确性，您可以使用lm_eval：</p> 
+         <pre><code>$ lm_eval --model vllm \
+  --model_args pretrained="./Meta-Llama-3-8B-Instruct-W8A8-Dynamic-Per-Token",add_bos_token=true \
+  --tasks gsm8k \
+  --num_fewshot 5 \
+  --limit 250 \
+  --batch_size 'auto'
+</code ></pre> 
+         <p>注意</p> 
+         <p>量化模型对bos token的存在可能较为敏感。运行评估时，请确保包含<code>add_bos_token=True</code >参数。</p> 
+         <h3><a id="63__393"></a>6.3. 最佳实践</h3> 
+         <ul>
+          <li>从512个样本开始作为校准数据（如果准确性下降，则增加样本量）</li>
+          <li>使用2048的序列长度作为起始点</li>
+          <li>使用模型训练时的聊天模板或指令模板</li>
+          <li>如果您已对模型进行了微调，可以考虑使用部分训练数据作为校准数据</li>
+         </ul> 
+         <h3><a id="64__398"></a>6.4. 故障排除与支持</h3> 
+         <p>如果遇到任何问题或有功能请求，请在vllm-project/llm-compressor的GitHub仓库中提交问题。</p> 
+         <h2><a id="7_FP8_W8A8_400"></a>7. FP8 W8A8</h2> 
+         <p>vLLM支持使用硬件加速在GPU上进行FP8（8位浮动点数）权重和激活值量化，支持的GPU包括Nvidia H100和AMD MI300x。目前，只有Hopper和Ada Lovelace GPU官方支持W8A8。Ampere GPU支持W8A16（仅权重FP8），使用Marlin内核。使用FP8量化模型可以将模型内存需求减少2倍，并将吞吐量提高最多1.6倍，同时对准确性的影响最小。</p> 
+         <p>请访问HF集合，查看适用于vLLM的流行LLM的量化FP8检查点。</p> 
+         <p>FP8类型通常在硬件中支持，具有两种不同的表示方式，每种表示方式在不同场景中有不同的用途：</p> 
+         <ul>
+          <li>E4M3：由1个位的符号位、4个位的指数位和3个位的尾数位组成。它可以存储的值范围为+/-448和nan。</li>
+          <li>E5M2：由1个位的符号位、5个位的指数位和2个位的尾数位组成。它可以存储的值范围为+/-57344，+/-无穷大和nan。增加动态范围的权衡是存储值的精度较低。</li>
+         </ul> 
+         <blockquote> 
+          <p><strong>注意</strong><br> FP8计算支持在计算能力大于8.9的NVIDIA GPU上（Ada Lovelace、Hopper）。FP8模型将在计算能力大于8.0的GPU（Ampere）上运行，作为仅权重的W8A16，利用FP8 Marlin。</p> 
+         </blockquote> 
+         <h3><a id="71__413"></a>7.1. 快速启动在线动态量化</h3> 
+         <p>使用vLLM，您可以将原始精度的BF16/FP16模型动态量化为FP8，而无需任何校准数据。您可以通过在命令行中指定 <code>--quantization="fp8"</code > 或在LLM构造函数中设置 <code>quantization="fp8"</code > 来启用该功能。</p> 
+         <p>在此模式下，所有Linear模块（除了最终的lm_head）将其权重量化为FP8_E4M3精度，并使用每个张量的缩放因子。在每次前向传递过程中，激活值的最小值和最大值会被计算出来，以提供高精度的动态每张量缩放因子。因此，在此模式下，延迟改进是有限的。</p> 
+         <pre><code class="prism language-python"><span class="token keyword">from</span> vllm <span class="token keyword">import</span> LLM
+model <span class="token operator">=</span> LLM<span class="token punctuation">(</span><span class="token string">"facebook/opt-125m"</span><span class="token punctuation">,</span> quantization<span class="token operator">=</span><span class="token string">"fp8"</span><span class="token punctuation">)</span>
+<span class="token comment"># INFO 06-10 17:55:42 model_runner.py:157] Loading model weights took 0.1550 GB</span>
+result <span class="token operator">=</span> model<span class="token punctuation">.</span>generate<span class="token punctuation">(</span><span class="token string">"Hello, my name is"</span><span class="token punctuation">)</span>
+</code ></pre> 
+         <blockquote> 
+          <p><strong>警告</strong><br> 目前，我们在量化为8位之前，以原始精度加载模型，因此您需要足够的内存来加载整个模型。</p> 
+         </blockquote> 
+         <h3><a id="72__426"></a>7.2. 安装</h3> 
+         <p>要使用vLLM生成高性能的FP8量化模型，您需要安装llm-compressor库：</p> 
+         <pre><code class="prism language-bash">pip <span class="token function">install</span> llmcompressor
+</code ></pre> 
+         <h3><a id="73__431"></a>7.3. 量化过程</h3> 
+         <p>量化过程包括三个主要步骤：</p> 
+         <ol>
+          <li>加载模型</li>
+          <li>应用量化</li>
+          <li>在vLLM中评估准确性</li>
+         </ol> 
+         <h4><a id="731__437"></a>7.3.1 加载模型</h4> 
+         <p>使用标准的transformers AutoModel类加载您的模型和分词器：</p> 
+         <pre><code class="prism language-python"><span class="token keyword">from</span> transformers <span class="token keyword">import</span> AutoTokenizer<span class="token punctuation">,</span> AutoModelForCausalLM
+
+MODEL_ID <span class="token operator">=</span> <span class="token string">"meta-llama/Meta-Llama-3-8B-Instruct"</span>
+model <span class="token operator">=</span> AutoModelForCausalLM<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>
+    MODEL_ID<span class="token punctuation">,</span> device_map<span class="token operator">=</span><span class="token string">"auto"</span><span class="token punctuation">,</span> torch_dtype<span class="token operator">=</span><span class="token string">"auto"</span><span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+tokenizer <span class="token operator">=</span> AutoTokenizer<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>MODEL_ID<span class="token punctuation">)</span>
+</code ></pre> 
+         <h4><a id="732_448"></a>7.3.2应用量化</h4> 
+         <p>对于FP8量化，我们可以通过简单的RTN量化恢复准确性。我们建议针对所有Linear层使用FP8_DYNAMIC方案，该方案使用：</p> 
+         <ul>
+          <li>对权重进行静态的、按通道量化</li>
+          <li>对激活值进行动态的、按令牌量化</li>
+         </ul> 
+         <p>由于简单的RTN不需要数据来进行权重量化，而激活值是动态量化的，因此我们在此量化流程中不需要任何校准数据。</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python"><span class="token keyword">from</span> llmcompressor<span class="token punctuation">.</span>transformers <span class="token keyword">import</span> oneshot
+<span class="token keyword">from</span> llmcompressor<span class="token punctuation">.</span>modifiers<span class="token punctuation">.</span>quantization <span class="token keyword">import</span> QuantizationModifier
+
+<span class="token comment"># Configure the simple PTQ quantization</span>
+recipe <span class="token operator">=</span> QuantizationModifier<span class="token punctuation">(</span>
+  targets<span class="token operator">=</span><span class="token string">"Linear"</span><span class="token punctuation">,</span> scheme<span class="token operator">=</span><span class="token string">"FP8_DYNAMIC"</span><span class="token punctuation">,</span> ignore<span class="token operator">=</span><span class="token punctuation">[</span><span class="token string">"lm_head"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+<span class="token comment"># Apply the quantization algorithm.</span>
+oneshot<span class="token punctuation">(</span>model<span class="token operator">=</span>model<span class="token punctuation">,</span> recipe<span class="token operator">=</span>recipe<span class="token punctuation">)</span>
+
+<span class="token comment"># Save the model.</span>
+SAVE_DIR <span class="token operator">=</span> MODEL_ID<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token string">"-FP8-Dynamic"</span>
+model<span class="token punctuation">.</span>save_pretrained<span class="token punctuation">(</span>SAVE_DIR<span class="token punctuation">)</span>
+tokenizer<span class="token punctuation">.</span>save_pretrained<span class="token punctuation">(</span>SAVE_DIR<span class="token punctuation">)</span>
+</code ></pre> 
+         <h4><a id="733__471"></a>7.3.3 评估准确性</h4> 
+         <p>安装vllm和lm-evaluation-harness：</p> 
+         <pre><code class="prism language-bash">pip <span class="token function">install</span> vllm lm-eval<span class="token operator">==</span><span class="token number">0.4</span>.4
+</code ></pre> 
+         <p>在vLLM中加载并运行模型：</p> 
+         <pre><code class="prism language-python"><span class="token keyword">from</span> vllm <span class="token keyword">import</span> LLM
+model <span class="token operator">=</span> LLM<span class="token punctuation">(</span><span class="token string">"./Meta-Llama-3-8B-Instruct-FP8-Dynamic"</span><span class="token punctuation">)</span>
+model<span class="token punctuation">.</span>generate<span class="token punctuation">(</span><span class="token string">"Hello my name is"</span><span class="token punctuation">)</span>
+</code ></pre> 
+         <p>使用lm_eval评估准确性（例如在gsm8k的250个样本上）：</p> 
+         <blockquote> 
+          <p><strong>注意</strong><br> 量化模型可能对bos token的存在较为敏感。lm_eval默认不添加bos token，因此在运行评估时，请确保包含<code>add_bos_token=True</code >参数。</p> 
+         </blockquote> 
+         <pre><code>$ MODEL=$PWD/Meta-Llama-3-8B-Instruct-FP8-Dynamic
+$ lm_eval \
+  --model vllm \
+  --model_args pretrained=$MODEL,add_bos_token=True \
+  --tasks gsm8k  --num_fewshot 5 --batch_size auto --limit 250
+</code ></pre> 
+         <p>以下是生成的分数示例：<br> <img src="https://i-blog.csdnimg.cn/direct/becc2d360d924247a65867f6c79edd3b.png" alt="在这里插入图片描述"></p> 
+         <h3><a id="74__494"></a>7.4. 故障排除与支持</h3> 
+         <p>如果遇到任何问题或有功能请求，请在vllm-project/llm-compressor的GitHub仓库中提交问题。</p> 
+         <h3><a id="75__496"></a>7.5. 已弃用的流程</h3> 
+         <blockquote> 
+          <p><strong>注意</strong><br> 以下信息保留供参考和搜索使用。下面描述的量化方法已弃用，推荐使用上文提到的llmcompressor方法。</p> 
+         </blockquote> 
+         <p>对于静态按张量离线量化到FP8，请安装AutoFP8库。</p> 
+         <pre><code class="prism language-bash"><span class="token function">git</span> clone https://github.com/neuralmagic/AutoFP8.git
+pip <span class="token function">install</span> <span class="token parameter variable">-e</span> AutoFP8
+</code ></pre> 
+         <p>这个包引入了AutoFP8ForCausalLM和BaseQuantizeConfig对象，用于管理模型压缩的方式。</p> 
+         <h3><a id="76__506"></a>7.6. 使用静态激活缩放因子的离线量化</h3> 
+         <p>您可以使用AutoFP8和校准数据，通过启用<code>activation_scheme="static"</code >参数，为权重和激活值生成按张量的静态缩放因子。</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python"><span class="token keyword">from</span> datasets <span class="token keyword">import</span> load_dataset
+<span class="token keyword">from</span> transformers <span class="token keyword">import</span> AutoTokenizer
+<span class="token keyword">from</span> auto_fp8 <span class="token keyword">import</span> AutoFP8ForCausalLM<span class="token punctuation">,</span> BaseQuantizeConfig
+
+pretrained_model_dir <span class="token operator">=</span> <span class="token string">"meta-llama/Meta-Llama-3-8B-Instruct"</span>
+quantized_model_dir <span class="token operator">=</span> <span class="token string">"Meta-Llama-3-8B-Instruct-FP8"</span>
+
+tokenizer <span class="token operator">=</span> AutoTokenizer<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>pretrained_model_dir<span class="token punctuation">,</span> use_fast<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+tokenizer<span class="token punctuation">.</span>pad_token <span class="token operator">=</span> tokenizer<span class="token punctuation">.</span>eos_token
+
+<span class="token comment"># Load and tokenize 512 dataset samples for calibration of activation scales</span>
+ds <span class="token operator">=</span> load_dataset<span class="token punctuation">(</span><span class="token string">"mgoin/ultrachat_2k"</span><span class="token punctuation">,</span> split<span class="token operator">=</span><span class="token string">"train_sft"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>select<span class="token punctuation">(</span><span class="token builtin">range</span><span class="token punctuation">(</span><span class="token number">512</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+examples <span class="token operator">=</span> <span class="token punctuation">[</span>tokenizer<span class="token punctuation">.</span>apply_chat_template<span class="token punctuation">(</span>batch<span class="token punctuation">[</span><span class="token string">"messages"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> tokenize<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span> <span class="token keyword">for</span> batch <span class="token keyword">in</span> ds<span class="token punctuation">]</span>
+examples <span class="token operator">=</span> tokenizer<span class="token punctuation">(</span>examples<span class="token punctuation">,</span> padding<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> truncation<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span> return_tensors<span class="token operator">=</span><span class="token string">"pt"</span><span class="token punctuation">)</span><span class="token punctuation">.</span>to<span class="token punctuation">(</span><span class="token string">"cuda"</span><span class="token punctuation">)</span>
+
+<span class="token comment"># Define quantization config with static activation scales</span>
+quantize_config <span class="token operator">=</span> BaseQuantizeConfig<span class="token punctuation">(</span>quant_method<span class="token operator">=</span><span class="token string">"fp8"</span><span class="token punctuation">,</span> activation_scheme<span class="token operator">=</span><span class="token string">"static"</span><span class="token punctuation">)</span>
+
+<span class="token comment"># Load the model, quantize, and save checkpoint</span>
+model <span class="token operator">=</span> AutoFP8ForCausalLM<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>pretrained_model_dir<span class="token punctuation">,</span> quantize_config<span class="token punctuation">)</span>
+model<span class="token punctuation">.</span>quantize<span class="token punctuation">(</span>examples<span class="token punctuation">)</span>
+model<span class="token punctuation">.</span>save_quantized<span class="token punctuation">(</span>quantized_model_dir<span class="token punctuation">)</span>
+</code ></pre> 
+         <p>您的模型检查点，包含量化后的权重和激活值，应位于Meta-Llama-3-8B-Instruct-FP8/。最后，您可以直接在vLLM中加载该量化模型检查点。</p> 
+         <pre><code class="prism language-python"><span class="token keyword">from</span> vllm <span class="token keyword">import</span> LLM
+model <span class="token operator">=</span> LLM<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"Meta-Llama-3-8B-Instruct-FP8/"</span><span class="token punctuation">)</span>
+<span class="token comment"># INFO 06-10 21:15:41 model_runner.py:159] Loading model weights took 8.4596 GB</span>
+result <span class="token operator">=</span> model<span class="token punctuation">.</span>generate<span class="token punctuation">(</span><span class="token string">"Hello, my name is"</span><span class="token punctuation">)</span>
+</code ></pre> 
+         <h2><a id="8_KV_539"></a>8. 量化KV缓存</h2> 
+         <h3><a id="81_FP8_KV_540"></a>8.1. FP8 KV缓存</h3> 
+         <p>将KV缓存量化为FP8可以减少其内存占用。这会增加缓存中可以存储的令牌数量，从而提高吞吐量。<br> FP8格式<br> OCP（开放计算项目）指定了两种常见的8位浮动点数据格式：</p> 
+         <ul>
+          <li>E5M2（5个指数位和2个尾数位）</li>
+          <li>E4M3FN（4个指数位和3个尾数位，通常简称为E4M3）</li>
+         </ul> 
+         <p>E4M3格式相比于E5M2提供了更高的精度。然而，由于其较小的动态范围（±240.0），E4M3通常需要与每个量化张量一起使用更高精度（FP32）的缩放因子。</p> 
+         <h4><a id="811_FP8_549"></a>8.1.1 FP8格式</h4> 
+         <p>OCP（开放计算项目）指定了两种常见的8位浮动点数据格式：</p> 
+         <ul>
+          <li>E5M2（5个指数位和2个尾数位）</li>
+          <li>E4M3FN（4个指数位和3个尾数位，通常简称为E4M3）</li>
+         </ul> 
+         <p>E4M3格式相比于E5M2提供了更高的精度。然而，由于其较小的动态范围（±240.0），E4M3通常需要与每个量化张量一起使用更高精度（FP32）的缩放因子。</p> 
+         <h4><a id="812__556"></a>8.1.2 当前限制</h4> 
+         <p>目前，仅支持按张量（标量）缩放因子。开发工作正在进行，以支持更细粒度的缩放因子（例如按通道缩放）。</p> 
+         <h4><a id="813__558"></a>8.1.3 性能影响</h4> 
+         <p>当前的FP8 KV缓存实现主要通过允许大约双倍的KV缓存分配空间来提高吞吐量。这使得以下两种情况成为可能：</p> 
+         <ul>
+          <li>处理更长的上下文长度以应对单个请求，或</li>
+          <li>处理更多的并发请求批次</li>
+         </ul> 
+         <p>然而，目前并没有提高延迟，因为该实现尚未包含融合的去量化和注意力操作。未来的版本将支持量化的注意力操作，并结合硬件加速，这应当能提供额外的性能提升。虽然最新的硬件（例如AMD MI300、NVIDIA Hopper及以后的型号）支持FP8与其他格式（如fp32、fp16、bf16）之间的原生硬件转换，但这一优势尚未完全实现。</p> 
+         <p>研究表明，FP8 E4M3量化通常只会对推理准确性产生最小的影响，因此它是吞吐量优化的一个实际选择。</p> 
+         <h3><a id="82__567"></a>8.2. 使用示例</h3> 
+         <p>以下是如何启用FP8量化的示例：</p> 
+         <pre><code class="prism language-python"><span class="token comment"># To calculate kv cache scales on the fly enable the calculate_kv_scales</span>
+<span class="token comment"># parameter</span>
+
+<span class="token keyword">from</span> vllm <span class="token keyword">import</span> LLM<span class="token punctuation">,</span> SamplingParams
+
+sampling_params <span class="token operator">=</span> SamplingParams<span class="token punctuation">(</span>temperature<span class="token operator">=</span><span class="token number">0.7</span><span class="token punctuation">,</span> top_p<span class="token operator">=</span><span class="token number">0.8</span><span class="token punctuation">)</span>
+llm <span class="token operator">=</span> LLM<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"meta-llama/Llama-2-7b-chat-hf"</span><span class="token punctuation">,</span>
+          kv_cache_dtype<span class="token operator">=</span><span class="token string">"fp8"</span><span class="token punctuation">,</span>
+          calculate_kv_scales<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+prompt <span class="token operator">=</span> <span class="token string">"London is the capital of"</span>
+out <span class="token operator">=</span> llm<span class="token punctuation">.</span>generate<span class="token punctuation">(</span>prompt<span class="token punctuation">,</span> sampling_params<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>outputs<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>text
+<span class="token keyword">print</span><span class="token punctuation">(</span>out<span class="token punctuation">)</span>
+</code ></pre> 
+         <p>kv_cache_dtype 参数指定了KV缓存存储的数据类型：</p> 
+         <ul>
+          <li>“auto”：使用模型的默认“未量化”数据类型</li>
+          <li>“fp8” 或 “fp8_e4m3”：支持CUDA 11.8+和ROCm（AMD GPU）</li>
+          <li>“fp8_e5m2”：支持CUDA 11.8+</li>
+         </ul> 
+         <h3><a id="83__588"></a>8.3. 为了更好的准确性，使用校准的缩放因子</h3> 
+         <p>为了在使用FP8 KV缓存时获得最佳的模型质量，我们建议使用针对代表性推理数据调整的校准缩放因子。LLM Compressor是推荐的工具来完成这一过程。</p> 
+         <h4><a id="831__590"></a>8.3.1 安装</h4> 
+         <p>首先，安装所需的依赖项：</p> 
+         <pre><code class="prism language-bash">pip <span class="token function">install</span> llmcompressor
+</code ></pre> 
+         <h4><a id="832__595"></a>8.3.2 示例用法</h4> 
+         <p>这是一个使用 meta-llama/Llama-3.1-8B-Instruct 的完整示例（大多数模型可以使用相同的模式）：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python"><span class="token keyword">from</span> datasets <span class="token keyword">import</span> load_dataset
+<span class="token keyword">from</span> transformers <span class="token keyword">import</span> AutoModelForCausalLM<span class="token punctuation">,</span> AutoTokenizer
+<span class="token keyword">from</span> llmcompressor<span class="token punctuation">.</span>transformers <span class="token keyword">import</span> oneshot
+
+<span class="token comment"># Select model and load it</span>
+MODEL_ID <span class="token operator">=</span> <span class="token string">"meta-llama/Llama-3.1-8B-Instruct"</span>
+model <span class="token operator">=</span> AutoModelForCausalLM<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>MODEL_ID<span class="token punctuation">,</span> device_map<span class="token operator">=</span><span class="token string">"auto"</span><span class="token punctuation">,</span> torch_dtype<span class="token operator">=</span><span class="token string">"auto"</span><span class="token punctuation">)</span>
+tokenizer <span class="token operator">=</span> AutoTokenizer<span class="token punctuation">.</span>from_pretrained<span class="token punctuation">(</span>MODEL_ID<span class="token punctuation">)</span>
+
+<span class="token comment"># Select calibration dataset</span>
+DATASET_ID <span class="token operator">=</span> <span class="token string">"HuggingFaceH4/ultrachat_200k"</span>
+DATASET_SPLIT <span class="token operator">=</span> <span class="token string">"train_sft"</span>
+
+<span class="token comment"># Configure calibration parameters</span>
+NUM_CALIBRATION_SAMPLES <span class="token operator">=</span> <span class="token number">512</span>  <span class="token comment"># 512 samples is a good starting point</span>
+MAX_SEQUENCE_LENGTH <span class="token operator">=</span> <span class="token number">2048</span>
+
+<span class="token comment"># Load and preprocess dataset</span>
+ds <span class="token operator">=</span> load_dataset<span class="token punctuation">(</span>DATASET_ID<span class="token punctuation">,</span> split<span class="token operator">=</span>DATASET_SPLIT<span class="token punctuation">)</span>
+ds <span class="token operator">=</span> ds<span class="token punctuation">.</span>shuffle<span class="token punctuation">(</span>seed<span class="token operator">=</span><span class="token number">42</span><span class="token punctuation">)</span><span class="token punctuation">.</span>select<span class="token punctuation">(</span><span class="token builtin">range</span><span class="token punctuation">(</span>NUM_CALIBRATION_SAMPLES<span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">process_and_tokenize</span><span class="token punctuation">(</span>example<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    text <span class="token operator">=</span> tokenizer<span class="token punctuation">.</span>apply_chat_template<span class="token punctuation">(</span>example<span class="token punctuation">[</span><span class="token string">"messages"</span><span class="token punctuation">]</span><span class="token punctuation">,</span> tokenize<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">)</span>
+    <span class="token keyword">return</span> tokenizer<span class="token punctuation">(</span>
+        text<span class="token punctuation">,</span>
+        padding<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span>
+        max_length<span class="token operator">=</span>MAX_SEQUENCE_LENGTH<span class="token punctuation">,</span>
+        truncation<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">,</span>
+        add_special_tokens<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span>
+    <span class="token punctuation">)</span>
+
+ds <span class="token operator">=</span> ds<span class="token punctuation">.</span><span class="token builtin">map</span><span class="token punctuation">(</span>process_and_tokenize<span class="token punctuation">,</span> remove_columns<span class="token operator">=</span>ds<span class="token punctuation">.</span>column_names<span class="token punctuation">)</span>
+
+<span class="token comment"># Configure quantization settings</span>
+recipe <span class="token operator">=</span> <span class="token triple-quoted-string string">"""
+quant_stage:
+    quant_modifiers:
+        QuantizationModifier:
+            kv_cache_scheme:
+                num_bits: 8
+                type: float
+                strategy: tensor
+                dynamic: false
+                symmetric: true
+"""</span>
+
+<span class="token comment"># Apply quantization</span>
+oneshot<span class="token punctuation">(</span>
+    model<span class="token operator">=</span>model<span class="token punctuation">,</span>
+    dataset<span class="token operator">=</span>ds<span class="token punctuation">,</span>
+    recipe<span class="token operator">=</span>recipe<span class="token punctuation">,</span>
+    max_seq_length<span class="token operator">=</span>MAX_SEQUENCE_LENGTH<span class="token punctuation">,</span>
+    num_calibration_samples<span class="token operator">=</span>NUM_CALIBRATION_SAMPLES<span class="token punctuation">,</span>
+<span class="token punctuation">)</span>
+
+<span class="token comment"># Save quantized model</span>
+SAVE_DIR <span class="token operator">=</span> MODEL_ID<span class="token punctuation">.</span>split<span class="token punctuation">(</span><span class="token string">"/"</span><span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">]</span> <span class="token operator">+</span> <span class="token string">"-FP8-KV"</span>
+model<span class="token punctuation">.</span>save_pretrained<span class="token punctuation">(</span>SAVE_DIR<span class="token punctuation">,</span> save_compressed<span class="token operator">=</span><span class="token boolean">True</span><span class="token punctuation">)</span>
+tokenizer<span class="token punctuation">.</span>save_pretrained<span class="token punctuation">(</span>SAVE_DIR<span class="token punctuation">)</span>
+</code ></pre> 
+         <p>上述脚本将在当前目录中创建一个包含量化模型（例如，Llama-3.1-8B-Instruct-FP8-KV）和校准缩放因子的文件夹。</p> 
+         <p>运行模型时，必须指定 <code>kv_cache_dtype="fp8"</code > 以启用KV缓存量化并使用这些缩放因子。</p> 
+         <pre><code class="prism language-python"><span class="token keyword">from</span> vllm <span class="token keyword">import</span> LLM<span class="token punctuation">,</span> SamplingParams
+
+sampling_params <span class="token operator">=</span> SamplingParams<span class="token punctuation">(</span>temperature<span class="token operator">=</span><span class="token number">0.7</span><span class="token punctuation">,</span> top_p<span class="token operator">=</span><span class="token number">0.8</span><span class="token punctuation">)</span>
+llm <span class="token operator">=</span> LLM<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"Llama-3.1-8B-Instruct-FP8-KV"</span><span class="token punctuation">,</span> kv_cache_dtype<span class="token operator">=</span><span class="token string">"fp8"</span><span class="token punctuation">)</span>
+prompt <span class="token operator">=</span> <span class="token string">"London is the capital of"</span>
+out <span class="token operator">=</span> llm<span class="token punctuation">.</span>generate<span class="token punctuation">(</span>prompt<span class="token punctuation">,</span> sampling_params<span class="token punctuation">)</span><span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>outputs<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>text
+<span class="token keyword">print</span><span class="token punctuation">(</span>out<span class="token punctuation">)</span>
+</code ></pre> 
+        </div> 
+        <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/markdown_views-0291849095.css" rel="stylesheet"> 
+        <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/style-e504d6a974.css" rel="stylesheet"> 
+       </div> 
+       <div id="blogExtensionBox" style="margin-top:12px" class="blog-extension-box"></div> 
+      </article>  
+     </div>       
+     <div id="pcCommentBox" class="comment-box comment-box-new2 login-comment-box-new" style="display:none"> 
+      <div class="has-comment" style="display:block"> 
+       <div class="one-line-box"> 
+        <div class="has-comment-tit go-side-comment"> 
+         <span class="count">0</span>&nbsp;条评论 
+        </div> 
+        <div class="has-comment-con comment-operate-item"></div> 
+        <a class="has-comment-bt-right go-side-comment focus">写评论</a> 
+       </div> 
+      </div> 
+     </div>     
+     <div class="blog-footer-bottom" style="margin-top:10px;"></div>   
+    </main> 
+    <aside class="blog_container_aside"> 
+     <div id="asideProfile" class="aside-box active"> 
+      <div class="profile-intro d-flex"> 
+       <div class="avatar-box d-flex justify-content-center flex-column"> 
+        <a href="https://blog.csdn.net/qq_39698985" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_379&quot;,&quot;spm&quot;:&quot;3001.4121&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img src="https://i-avatar.csdnimg.cn/ab62205193b84b71b0ffc27cb2042a93_qq_39698985.jpg!1" class="avatar_pic"> </a> 
+       </div> 
+       <div class="user-info d-flex flex-column profile-intro-name-box"> 
+        <div class="profile-intro-name-boxTop"> 
+         <a href="https://blog.csdn.net/qq_39698985" target="_blank" class="" id="uid" title="AI专题精讲" data-report-click="{&quot;mod&quot;:&quot;popu_379&quot;,&quot;spm&quot;:&quot;3001.4122&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985&quot;,&quot;ab&quot;:&quot;new&quot;}"> <span class="name" username="qq_39698985">AI专题精讲</span> </a> 
+        </div> 
+        <div class="profile-intro-name-boxFooter-new"> 
+         <p class="profile-intro-name-leve"> <span> 博客等级 </span> <img class="level" src="https://csdnimg.cn/identity/blog7.png"> </p> 
+         <span class="profile-intro-name-years" title="已加入 CSDN 8年">码龄8年</span> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="profile-intro-rank-information"> 
+       <dl> 
+        <a href="https://blog.csdn.net/qq_39698985" data-report-click="{&quot;mod&quot;:&quot;1598321000_001&quot;,&quot;spm&quot;:&quot;3001.4310&quot;}" data-report-query="t=1"> 
+         <dd>
+          <span>823</span>
+         </dd> 
+         <dt>
+          原创
+         </dt> </a> 
+       </dl> 
+       <dl title="6610"> 
+        <dd>
+         6610
+        </dd> 
+        <dt>
+         点赞
+        </dt> 
+       </dl> 
+       <dl title="6550"> 
+        <dd>
+         6550
+        </dd> 
+        <dt>
+         收藏
+        </dt> 
+       </dl> 
+       <dl id="fanBox" title="2701"> 
+        <dd>
+         <span id="fan">2701</span>
+        </dd> 
+        <dt>
+         粉丝
+        </dt> 
+       </dl> 
+      </div> 
+      <div class="profile-intro-name-boxOpration"> 
+       <div class="opt-letter-watch-box"> 
+        <a class="attented personal-watch bt-button" id="btnAttent">已关注</a> 
+       </div> 
+       <div class="opt-letter-watch-box"> 
+        <a rel="noopener" class="bt-button personal-letter" href="https://im.csdn.net/chat/qq_39698985" target="_blank">私信</a> 
+       </div> 
+      </div> 
+     </div> 
+     <div class="swiper-remuneration-container" id="swiper-remuneration-container"> 
+      <div class="swiper-wrapper"> 
+       <!-- 这里可以添加多个Swiper幻灯片 --> 
+       <div class="swiper-slide"> 
+        <a data-report-click="{&quot;spm&quot;:&quot;3001.9728&quot;,&quot;extra&quot;:{&quot;index&quot;:&quot;0&quot;}}" data-report-swiper="{&quot;spm&quot;:&quot;3001.9728&quot;,&quot;extra&quot;:{&quot;index&quot;:&quot;0&quot;}}" href="https://mall.csdn.net/vip?utm_source=25723_vip_blogleftbanner" target="_blank"> <img src="https://i-operation.csdnimg.cn/images/cd786d04f748443a842de57d8cd3a062.png" alt=""> </a> 
+       </div> 
+       <div class="swiper-slide"> 
+        <a data-report-click="{&quot;spm&quot;:&quot;3001.9728&quot;,&quot;extra&quot;:{&quot;index&quot;:&quot;1&quot;}}" data-report-swiper="{&quot;spm&quot;:&quot;3001.9728&quot;,&quot;extra&quot;:{&quot;index&quot;:&quot;1&quot;}}" href="https://marketing.csdn.net/p/cae4122b7723eed7ae0db5e1e5390990 " target="_blank"> <img src="https://i-operation.csdnimg.cn/images/e3a961f682be4fb3818bf5753aad51af.png" alt=""> </a> 
+       </div> 
+       <div class="swiper-slide"> 
+        <a data-report-click="{&quot;spm&quot;:&quot;3001.9728&quot;,&quot;extra&quot;:{&quot;index&quot;:&quot;2&quot;}}" data-report-swiper="{&quot;spm&quot;:&quot;3001.9728&quot;,&quot;extra&quot;:{&quot;index&quot;:&quot;2&quot;}}" href="https://ai.csdn.net/homework?utm_source=2048390893" target="_blank"> <img src="https://i-operation.csdnimg.cn/images/f70cbe190d3c4f25901cb03b6971f64d.png" alt=""> </a> 
+       </div> 
+       <div class="swiper-slide"> 
+        <a data-report-click="{&quot;spm&quot;:&quot;3001.9728&quot;,&quot;extra&quot;:{&quot;index&quot;:&quot;3&quot;}}" data-report-swiper="{&quot;spm&quot;:&quot;3001.9728&quot;,&quot;extra&quot;:{&quot;index&quot;:&quot;3&quot;}}" href="https://mpbeta.csdn.net/edit?utm_source=blog" target="_blank"> <img src="https://i-operation.csdnimg.cn/images/bfc20af708654cc689adbb6361f6dc98.png" alt=""> </a> 
+       </div> 
+      </div> 
+      <div class="swiper-remuneration-pagination"></div> 
+      <!-- 如果需要导航按钮 --> 
+      <div class="swiper-remuneration-button-prev"></div> 
+      <div class="swiper-remuneration-button-next"></div> 
+     </div> 
+     <div id="asideHotArticle" class="aside-box"> 
+      <h3 class="aside-title">热门文章</h3> 
+      <div class="aside-content"> 
+       <ul class="hotArticle-list"> 
+        <li> <a href="https://blog.csdn.net/qq_39698985/article/details/122755194" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_541&quot;,&quot;spm&quot;:&quot;3001.4139&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/122755194&quot;,&quot;ab&quot;:&quot;new&quot;}"> Pycharm设置http代理 <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/readCountWhite.png" alt=""> <span class="read">95771</span> </a> </li> 
+        <li> <a href="https://blog.csdn.net/qq_39698985/article/details/123770871" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_541&quot;,&quot;spm&quot;:&quot;3001.4139&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/123770871&quot;,&quot;ab&quot;:&quot;new&quot;}"> 安装 OpenVPN 客户端 <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/readCountWhite.png" alt=""> <span class="read">45333</span> </a> </li> 
+        <li> <a href="https://blog.csdn.net/qq_39698985/article/details/121770446" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_541&quot;,&quot;spm&quot;:&quot;3001.4139&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/121770446&quot;,&quot;ab&quot;:&quot;new&quot;}"> centos卸载软件三种方式 <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/readCountWhite.png" alt=""> <span class="read">27506</span> </a> </li> 
+        <li> <a href="https://blog.csdn.net/qq_39698985/article/details/114983293" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_541&quot;,&quot;spm&quot;:&quot;3001.4139&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/114983293&quot;,&quot;ab&quot;:&quot;new&quot;}"> kubectl安装无法连接packages.cloud.google.com <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/readCountWhite.png" alt=""> <span class="read">12357</span> </a> </li> 
+        <li> <a href="https://blog.csdn.net/qq_39698985/article/details/123748820" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_541&quot;,&quot;spm&quot;:&quot;3001.4139&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/123748820&quot;,&quot;ab&quot;:&quot;new&quot;}"> Docker 配置网络代理 <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/readCountWhite.png" alt=""> <span class="read">12066</span> </a> </li> 
+       </ul> 
+      </div> 
+     </div> 
+     <div id="asideCategory" class="aside-box aside-box-column flexible-box-new"> 
+      <h3 class="aside-title">分类专栏</h3> 
+      <div class="aside-content" id="aside-content"> 
+       <ul> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12019859.html" data-report-click="{&quot;mod&quot;:&quot;popu_826&quot;,&quot;spm&quot;:&quot;3001.4230&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12019859.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756930.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 深度学习 </span> <span class="pay-tag">付费</span> </a> <span class="special-column-num">51篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12112329.html" data-report-click="{&quot;mod&quot;:&quot;popu_826&quot;,&quot;spm&quot;:&quot;3001.4230&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12112329.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 大模型专题系列 </span> <span class="pay-tag">付费</span> </a> <span class="special-column-num">111篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12839889.html" data-report-click="{&quot;mod&quot;:&quot;popu_826&quot;,&quot;spm&quot;:&quot;3001.4230&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12839889.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756925.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> Pytorch入门到精通 </span> <span class="pay-tag">付费</span> </a> <span class="special-column-num">70篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12839894.html" data-report-click="{&quot;mod&quot;:&quot;popu_826&quot;,&quot;spm&quot;:&quot;3001.4230&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12839894.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756926.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 图神经网络入门到精通 </span> <span class="pay-tag">付费</span> </a> <span class="special-column-num">29篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12830452.html" data-report-click="{&quot;mod&quot;:&quot;popu_826&quot;,&quot;spm&quot;:&quot;3001.4230&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12830452.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756923.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> CUDA C++编程系列专题 </span> <span class="pay-tag">付费</span> </a> <span class="special-column-num">25篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_13009690.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_13009690.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/direct/41ab45af3c8e4386b1b8ae65a2f8c430.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 模型加速 </span> </a> <span class="special-column-num">13篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12233032.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12233032.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756919.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 多模态模型Paper阅读 </span> </a> <span class="special-column-num">50篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_13002429.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_13002429.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/direct/3d48a709d13b4e9e8b5962513c851930.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 强化学习 </span> </a> <span class="special-column-num">23篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12871440.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12871440.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 文本模型Paper阅读 </span> </a> <span class="special-column-num">78篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12019969.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12019969.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756925.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 爬虫 </span> </a> <span class="special-column-num">3篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12246547.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12246547.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756930.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 数据结构 </span> </a> <span class="special-column-num">32篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11977596.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11977596.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756757.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 机器学习 </span> </a> <span class="special-column-num">8篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12762530.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12762530.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756918.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> Git </span> </a> <span class="special-column-num">9篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12649193.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12649193.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> C++ </span> </a> <span class="special-column-num">7篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12872574.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12872574.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756738.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 视觉模型Paper阅读 </span> </a> <span class="special-column-num">27篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12934780.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12934780.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756757.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 语音模型Paper阅读 </span> </a> <span class="special-column-num">8篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12995820.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12995820.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/direct/b9d4e053b9e24833b77397c48be07bd7.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> Paper阅读 </span> </a> <span class="special-column-num">90篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12912655.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12912655.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756724.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 前端 </span> </a> <span class="special-column-num">4篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11702144.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11702144.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> k8s </span> </a> <span class="special-column-num">29篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12425440.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12425440.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 数据库 </span> </a> <span class="special-column-num">1篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11832293.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11832293.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756928.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> java </span> </a> <span class="special-column-num">2篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12019869.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12019869.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756754.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 其他 </span> </a> <span class="special-column-num">3篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11593561.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11593561.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 图神经网络Paper阅读 </span> </a> <span class="special-column-num">10篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11390353.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11390353.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756925.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> python </span> </a> <span class="special-column-num">62篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11390367.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11390367.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756724.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> linux </span> </a> <span class="special-column-num">44篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11594581.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11594581.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/blog_column_migrate/974bb3dc0e18bc4c3b83347853565ffa.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 推荐系统 </span> </a> <span class="special-column-num">8篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11390351.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11390351.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/blog_column_migrate/4e6a5160c63a16aed96933ce2b23bed2.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> 大数据 </span> </a> <span class="special-column-num">7篇</span> </li> 
+        <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11324647.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11324647.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+          <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756927.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class="title oneline"> docker </span> </a> <span class="special-column-num">10篇</span> </li> 
+       </ul> 
+      </div> 
+      <p class="text-center"> <a class="flexible-btn-new" data-report-click="{&quot;spm&quot;:&quot;3001.10779&quot;,&quot;strategy&quot;:&quot;展开全部&quot;}" data-maxheight="0" data-minheight="208px" data-fbox="#aside-content" data-flag="flag"><span class="text">展开全部</span> <img class="look-more" src="https://csdnimg.cn/release/blogv2/dist/pc/img/arrowup-line-bot-White.png" alt=""></a> <a class="flexible-btn-new-close" data-report-click="{&quot;spm&quot;:&quot;3001.10779&quot;,&quot;strategy&quot;:&quot;收起&quot;}" data-minheight="208px" data-fbox="#aside-content" data-scroll="true" data-flag="flag"><span class="text">收起</span> <img class="look-more" src="https://csdnimg.cn/release/blogv2/dist/pc/img/arrowup-line-top-White.png" alt=""></a> </p> 
+     </div> 
+     <div class="article-previous" id="article-previous"> 
+      <dl data-report-click="{&quot;spm&quot;:&quot;3001.10752&quot;,&quot;extend1&quot;:&quot;上一篇&quot;}" data-report-view="{&quot;spm&quot;:&quot;3001.10752&quot;,&quot;extend1&quot;:&quot;上一篇&quot;}"> 
+       <dt>
+         上一篇： 
+       </dt> 
+       <dd> 
+        <a href="https://blog.csdn.net/qq_39698985/article/details/145713806" data-report-query="spm=3001.10752"> vLLM专题（八）-使用Run:ai模型流加载模型 </a> 
+       </dd> 
+      </dl> 
+      <dl class="next" data-report-click="{&quot;spm&quot;:&quot;3001.10796&quot;,&quot;extend1&quot;:&quot;下一篇&quot;}" data-report-view="{&quot;spm&quot;:&quot;3001.10796&quot;,&quot;extend1&quot;:&quot;下一篇&quot;}"> 
+       <dt>
+         下一篇： 
+       </dt> 
+       <dd> 
+        <a href="https://blog.csdn.net/qq_39698985/article/details/145689475" data-report-query="spm=3001.10796"> M2M100：跨越多语言机器翻译的英语中心局限 </a> 
+       </dd> 
+      </dl> 
+     </div> 
+     <div id="asideNewComments" class="aside-box"> 
+      <h3 class="aside-title">最新评论</h3> 
+      <div class="aside-content"> 
+       <ul class="newcomment-list"> 
+        <li> <a class="title text-truncate" target="_blank" href="https://blog.csdn.net/qq_39698985/article/details/149391597#comments_37647873" data-report-click="{&quot;mod&quot;:&quot;popu_542&quot;,&quot;spm&quot;:&quot;3001.4231&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/149391597#comments_37647873&quot;,&quot;ab&quot;:&quot;new&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_542&quot;,&quot;spm&quot;:&quot;3001.4231&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/149391597#comments_37647873&quot;,&quot;ab&quot;:&quot;new&quot;}">Llama 2：开放基础模型与微调聊天模型</a> <p class="comment ellipsis"> <a href="https://blog.csdn.net/community_717" class="user-name" target="_blank">CSDN-Ada助手: </a> <span class="code-comments">恭喜你这篇博客进入【CSDN每天值得看】榜单，全部的排名请看 https://bbs.csdn.net/topics/619786503。 </span> </p> </li> 
+        <li> <a class="title text-truncate" target="_blank" href="https://blog.csdn.net/qq_39698985/article/details/148906300#comments_37537578" data-report-click="{&quot;mod&quot;:&quot;popu_542&quot;,&quot;spm&quot;:&quot;3001.4231&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/148906300#comments_37537578&quot;,&quot;ab&quot;:&quot;new&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_542&quot;,&quot;spm&quot;:&quot;3001.4231&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/148906300#comments_37537578&quot;,&quot;ab&quot;:&quot;new&quot;}">SuperGlue：使用图神经网络学习特征匹配</a> <p class="comment ellipsis"> <a href="https://blog.csdn.net/community_717" class="user-name" target="_blank">CSDN-Ada助手: </a> <span class="code-comments">恭喜你这篇博客进入【CSDN每天值得看】榜单，全部的排名请看 https://bbs.csdn.net/topics/619768966。 </span> </p> </li> 
+        <li> <a class="title text-truncate" target="_blank" href="https://blog.csdn.net/qq_39698985/article/details/146999961#comments_37348946" data-report-click="{&quot;mod&quot;:&quot;popu_542&quot;,&quot;spm&quot;:&quot;3001.4231&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/146999961#comments_37348946&quot;,&quot;ab&quot;:&quot;new&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_542&quot;,&quot;spm&quot;:&quot;3001.4231&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/146999961#comments_37348946&quot;,&quot;ab&quot;:&quot;new&quot;}">Blenderbot：构建开放域聊天机器人的教程</a> <p class="comment ellipsis"> <a href="https://blog.csdn.net/community_717" class="user-name" target="_blank">CSDN-Ada助手: </a> <span class="code-comments">恭喜你这篇博客进入【CSDN月度精选】榜单，全部的排名请看 https://bbs.csdn.net/topics/619736502。 </span> </p> </li> 
+        <li> <a class="title text-truncate" target="_blank" href="https://blog.csdn.net/qq_39698985/article/details/146999961#comments_37342233" data-report-click="{&quot;mod&quot;:&quot;popu_542&quot;,&quot;spm&quot;:&quot;3001.4231&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/146999961#comments_37342233&quot;,&quot;ab&quot;:&quot;new&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_542&quot;,&quot;spm&quot;:&quot;3001.4231&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/146999961#comments_37342233&quot;,&quot;ab&quot;:&quot;new&quot;}">Blenderbot：构建开放域聊天机器人的教程</a> <p class="comment ellipsis"> <a href="https://blog.csdn.net/community_717" class="user-name" target="_blank">CSDN-Ada助手: </a> <span class="code-comments">恭喜你这篇博客进入【CSDN月度精选】榜单，全部的排名请看 https://bbs.csdn.net/topics/619735257。 </span> </p> </li> 
+        <li> <a class="title text-truncate" target="_blank" href="https://blog.csdn.net/qq_39698985/article/details/146999961#comments_37333339" data-report-click="{&quot;mod&quot;:&quot;popu_542&quot;,&quot;spm&quot;:&quot;3001.4231&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/146999961#comments_37333339&quot;,&quot;ab&quot;:&quot;new&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_542&quot;,&quot;spm&quot;:&quot;3001.4231&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/146999961#comments_37333339&quot;,&quot;ab&quot;:&quot;new&quot;}">Blenderbot：构建开放域聊天机器人的教程</a> <p class="comment ellipsis"> <a href="https://blog.csdn.net/community_717" class="user-name" target="_blank">CSDN-Ada助手: </a> <span class="code-comments">恭喜你这篇博客进入【CSDN月度精选】榜单，全部的排名请看 https://bbs.csdn.net/topics/619734078。 </span> </p> </li> 
+       </ul> 
+      </div> 
+     </div> 
+     <div id="asideHotArticle" class="aside-box"> 
+      <h3 class="aside-title">大家在看</h3> 
+      <div class="aside-content"> 
+       <ul class="hotArticle-list"> 
+        <li> <a href="https://blog.csdn.net/2501_92598574/article/details/149809068" target="_blank" data-report-click="{&quot;spm&quot;:&quot;3001.10093&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/2501_92598574/article/details/149809068&quot;,&quot;strategy&quot;:&quot;202_1052723-3124800_RCMD&quot;,&quot;ab&quot;:&quot;new&quot;}" data-report-view="{&quot;spm&quot;:&quot;3001.10093&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/2501_92598574/article/details/149809068&quot;,&quot;strategy&quot;:&quot;202_1052723-3124800_RCMD&quot;,&quot;ab&quot;:&quot;new&quot;}"> 最新PS 2025安装包下载与安装教程（Adobe Photoshop 2025 ） </a> </li> 
+        <li> <a href="https://blog.csdn.net/2501_92487762/article/details/149809070" target="_blank" data-report-click="{&quot;spm&quot;:&quot;3001.10093&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/2501_92487762/article/details/149809070&quot;,&quot;strategy&quot;:&quot;202_1052723-3124792_RCMD&quot;,&quot;ab&quot;:&quot;new&quot;}" data-report-view="{&quot;spm&quot;:&quot;3001.10093&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/2501_92487762/article/details/149809070&quot;,&quot;strategy&quot;:&quot;202_1052723-3124792_RCMD&quot;,&quot;ab&quot;:&quot;new&quot;}"> 智慧零售商品识别准确率↑32%：陌讯多模态融合算法实战解析 </a> </li> 
+        <li> <a href="https://blog.csdn.net/MHD0815/article/details/149301100" target="_blank" data-report-click="{&quot;spm&quot;:&quot;3001.10093&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/MHD0815/article/details/149301100&quot;,&quot;strategy&quot;:&quot;202_1052723-3124788_RCMD&quot;,&quot;ab&quot;:&quot;new&quot;}" data-report-view="{&quot;spm&quot;:&quot;3001.10093&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/MHD0815/article/details/149301100&quot;,&quot;strategy&quot;:&quot;202_1052723-3124788_RCMD&quot;,&quot;ab&quot;:&quot;new&quot;}"> 手把手教你学Simulink——电力系统与新能源场景：基于光伏阵列的最大功率点跟踪(MPPT)策略研究 <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/readCountWhite.png" alt=""> <span class="read">13</span> </a> </li> 
+        <li> <a href="https://blog.csdn.net/weixin_45549166/article/details/149752615" target="_blank" data-report-click="{&quot;spm&quot;:&quot;3001.10093&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/weixin_45549166/article/details/149752615&quot;,&quot;strategy&quot;:&quot;202_1052723-3124803_RCMD&quot;,&quot;ab&quot;:&quot;new&quot;}" data-report-view="{&quot;spm&quot;:&quot;3001.10093&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/weixin_45549166/article/details/149752615&quot;,&quot;strategy&quot;:&quot;202_1052723-3124803_RCMD&quot;,&quot;ab&quot;:&quot;new&quot;}"> NeurIPS论文速递 | 提升大模型能力必看的三篇论文！ <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/readCountWhite.png" alt=""> <span class="read">846</span> </a> </li> 
+        <li> <a href="https://blog.csdn.net/2501_92902792/article/details/149768672" target="_blank" data-report-click="{&quot;spm&quot;:&quot;3001.10093&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/2501_92902792/article/details/149768672&quot;,&quot;strategy&quot;:&quot;202_1052723-3124777_RCMD&quot;,&quot;ab&quot;:&quot;new&quot;}" data-report-view="{&quot;spm&quot;:&quot;3001.10093&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/2501_92902792/article/details/149768672&quot;,&quot;strategy&quot;:&quot;202_1052723-3124777_RCMD&quot;,&quot;ab&quot;:&quot;new&quot;}"> 工业CT在科研材料的应用 <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/readCountWhite.png" alt=""> <span class="read">607</span> </a> </li> 
+       </ul> 
+      </div> 
+     </div> 
+     <div id="asideArchive" class="aside-box" style="display:block!important; width:300px;"> 
+      <h3 class="aside-title">最新文章</h3> 
+      <div class="aside-content"> 
+       <ul class="inf_list clearfix"> 
+        <li class="clearfix"> <a href="https://blog.csdn.net/qq_39698985/article/details/149756924" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_382&quot;,&quot;spm&quot;:&quot;3001.4136&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/149756924&quot;,&quot;ab&quot;:&quot;left&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_382&quot;,&quot;spm&quot;:&quot;3001.4136&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/149756924&quot;,&quot;ab&quot;:&quot;left&quot;}">DISTILLM：迈向大型语言模型的简化蒸馏方法</a> </li> 
+        <li class="clearfix"> <a href="https://blog.csdn.net/qq_39698985/article/details/149725846" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_382&quot;,&quot;spm&quot;:&quot;3001.4136&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/149725846&quot;,&quot;ab&quot;:&quot;left&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_382&quot;,&quot;spm&quot;:&quot;3001.4136&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/149725846&quot;,&quot;ab&quot;:&quot;left&quot;}">decoupleQ：通过将参数解耦为整数与浮点数，实现2比特后训练统一量化</a> </li> 
+        <li class="clearfix"> <a href="https://blog.csdn.net/qq_39698985/article/details/149695086" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_382&quot;,&quot;spm&quot;:&quot;3001.4136&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/149695086&quot;,&quot;ab&quot;:&quot;left&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_382&quot;,&quot;spm&quot;:&quot;3001.4136&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/article/details/149695086&quot;,&quot;ab&quot;:&quot;left&quot;}">CacheGen：用于快速大语言模型推理服务的 KV 缓存压缩与流式传输</a> </li> 
+       </ul> 
+       <div class="archive-bar"></div> 
+       <div class="archive-box"> 
+        <div class="archive-title">
+         2025
+        </div> 
+        <div class="archive-content"> 
+         <div class="archive-item"> 
+          <a href="https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=07" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_538&quot;,&quot;spm&quot;:&quot;3001.4138&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=07&quot;}"> <span class="time">07月</span> <span class="count">129篇</span> </a> 
+         </div> 
+         <div class="archive-item"> 
+          <a href="https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=06" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_538&quot;,&quot;spm&quot;:&quot;3001.4138&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=06&quot;}"> <span class="time">06月</span> <span class="count">28篇</span> </a> 
+         </div> 
+         <div class="archive-item"> 
+          <a href="https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=05" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_538&quot;,&quot;spm&quot;:&quot;3001.4138&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=05&quot;}"> <span class="time">05月</span> <span class="count">31篇</span> </a> 
+         </div> 
+         <div class="archive-item"> 
+          <a href="https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=04" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_538&quot;,&quot;spm&quot;:&quot;3001.4138&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=04&quot;}"> <span class="time">04月</span> <span class="count">69篇</span> </a> 
+         </div> 
+         <div class="archive-item"> 
+          <a href="https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=03" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_538&quot;,&quot;spm&quot;:&quot;3001.4138&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=03&quot;}"> <span class="time">03月</span> <span class="count">138篇</span> </a> 
+         </div> 
+         <div class="archive-item"> 
+          <a href="https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=02" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_538&quot;,&quot;spm&quot;:&quot;3001.4138&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=02&quot;}"> <span class="time">02月</span> <span class="count">71篇</span> </a> 
+         </div> 
+         <div class="archive-item"> 
+          <a href="https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=01" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_538&quot;,&quot;spm&quot;:&quot;3001.4138&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985?type=blog&amp;year=2025&amp;month=01&quot;}"> <span class="time">01月</span> <span class="count">43篇</span> </a> 
+         </div> 
+        </div> 
+        <div class="archive-list-item">
+         <a href="https://blog.csdn.net/qq_39698985?type=blog&amp;year=2024&amp;month=12" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_538&quot;,&quot;spm&quot;:&quot;3001.4138&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985?type=blog&amp;year=2024&amp;month=12&quot;}"><span class="year">2024年</span><span class="num">114篇</span></a>
+        </div> 
+        <div class="archive-list-item">
+         <a href="https://blog.csdn.net/qq_39698985?type=blog&amp;year=2023&amp;month=12" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_538&quot;,&quot;spm&quot;:&quot;3001.4138&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985?type=blog&amp;year=2023&amp;month=12&quot;}"><span class="year">2023年</span><span class="num">53篇</span></a>
+        </div> 
+        <div class="archive-list-item">
+         <a href="https://blog.csdn.net/qq_39698985?type=blog&amp;year=2022&amp;month=12" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_538&quot;,&quot;spm&quot;:&quot;3001.4138&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985?type=blog&amp;year=2022&amp;month=12&quot;}"><span class="year">2022年</span><span class="num">84篇</span></a>
+        </div> 
+        <div class="archive-list-item">
+         <a href="https://blog.csdn.net/qq_39698985?type=blog&amp;year=2021&amp;month=12" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_538&quot;,&quot;spm&quot;:&quot;3001.4138&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985?type=blog&amp;year=2021&amp;month=12&quot;}"><span class="year">2021年</span><span class="num">58篇</span></a>
+        </div> 
+        <div class="archive-list-item">
+         <a href="https://blog.csdn.net/qq_39698985?type=blog&amp;year=2020&amp;month=11" target="_blank" data-report-click="{&quot;mod&quot;:&quot;popu_538&quot;,&quot;spm&quot;:&quot;3001.4138&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985?type=blog&amp;year=2020&amp;month=11&quot;}"><span class="year">2020年</span><span class="num">18篇</span></a>
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+     <!-- 详情页显示目录 --> 
+     <!--文章目录--> 
+     <div id="asidedirectory" class="aside-box"> 
+      <div class="groupfile groupfile-active" id="directory"> 
+       <h3 class="aside-title">目录</h3> 
+       <div class="align-items-stretch group_item" id="align-items-stretch"> 
+        <div class="pos-box"> 
+         <div class="scroll-box"> 
+          <div class="toc-box"></div> 
+         </div> 
+        </div> 
+       </div> 
+       <p class="flexible-btn-new active" id="flexible-btn-groupfile" data-report-click="{&quot;spm&quot;:&quot;3001.10780&quot;,&quot;strategy&quot;:&quot;展开全部&quot;}" data-minheight="117px" data-maxheight="446px" data-fbox="#align-items-stretch"><span class="text">展开全部</span> <img class="look-more" src="https://csdnimg.cn/release/blogv2/dist/pc/img/arrowup-line-bot-White.png" alt=""></p> 
+       <p class="flexible-btn-new-close active" data-report-click="{&quot;spm&quot;:&quot;3001.10780&quot;,&quot;strategy&quot;:&quot;收起&quot;}" data-minheight="117px" data-maxheight="446px" data-fbox="#align-items-stretch"><span class="text">收起</span> <img class="look-more" src="https://csdnimg.cn/release/blogv2/dist/pc/img/arrowup-line-top-White.png" alt=""></p> 
+      </div> 
+     </div> 
+    </aside>    
+   </div> 
+   <div class="recommend-right align-items-stretch clearfix" id="rightAside" data-type="recommend"> 
+    <aside class="recommend-right_aside"> 
+     <div class="rightside-fixed-hide"> 
+     </div> 
+     <div id="recommend-right"> 
+      <div class="flex-column aside-box groupfile groupfile-active " id="groupfile"> 
+       <div class="groupfile-div"> 
+        <h3 class="aside-title">目录</h3> 
+        <div class="align-items-stretch group_item" id="align-items-stretch-right"> 
+         <div class="pos-box"> 
+          <div class="scroll-box"> 
+           <div class="toc-box"></div> 
+          </div> 
+         </div> 
+        </div> 
+        <p class="flexible-btn-new" id="flexible-btn-groupfile" data-report-click="{&quot;spm&quot;:&quot;3001.10782&quot;,&quot;strategy&quot;:&quot;展开全部&quot;}" data-traigger="true" data-minheight="117px" data-maxheight="446px" data-fbox="#align-items-stretch-right"><span class="text">展开全部</span> <img class="look-more" src="https://csdnimg.cn/release/blogv2/dist/pc/img/arrowup-line-bot-White.png" alt=""></p> 
+        <p class="flexible-btn-new-close close" data-report-click="{&quot;spm&quot;:&quot;3001.10782&quot;,&quot;strategy&quot;:&quot;收起&quot;}" data-traigger="true" data-minheight="117px" data-maxheight="446px" data-fbox="#align-items-stretch-right"><span class="text">收起</span> <img class="look-more" src="https://csdnimg.cn/release/blogv2/dist/pc/img/arrowup-line-top-White.png" alt=""></p> 
+       </div> 
+      </div> 
+      <div class="article-previous" id="article"> 
+       <dl data-report-click="{&quot;spm&quot;:&quot;3001.10752&quot;,&quot;extend1&quot;:&quot;上一篇&quot;}" data-report-view="{&quot;spm&quot;:&quot;3001.10752&quot;,&quot;extend1&quot;:&quot;上一篇&quot;}"> 
+        <dt>
+          上一篇： 
+        </dt> 
+        <dd> 
+         <a href="https://blog.csdn.net/qq_39698985/article/details/145713806" data-report-query="spm=3001.10752"> vLLM专题（八）-使用Run:ai模型流加载模型 </a> 
+        </dd> 
+       </dl> 
+       <dl class="next" data-report-click="{&quot;spm&quot;:&quot;3001.10796&quot;,&quot;extend1&quot;:&quot;下一篇&quot;}" data-report-view="{&quot;spm&quot;:&quot;3001.10796&quot;,&quot;extend1&quot;:&quot;下一篇&quot;}"> 
+        <dt>
+          下一篇： 
+        </dt> 
+        <dd> 
+         <a href="https://blog.csdn.net/qq_39698985/article/details/145689475" data-report-query="spm=3001.10796"> M2M100：跨越多语言机器翻译的英语中心局限 </a> 
+        </dd> 
+       </dl> 
+      </div> 
+      <div class="aside-box kind_person d-flex flex-column flexible-box-new"> 
+       <h3 class="aside-title">分类专栏</h3> 
+       <div class="align-items-stretch kindof_item" id="kind_person_column"> 
+        <div class="aside-content" id="aside-content-column"> 
+         <ul> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12019859.html" data-report-click="{&quot;mod&quot;:&quot;popu_826&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4230&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12019859.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756930.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 深度学习 </span> <span class="pay-tag">付费</span> </a> <span class="special-column-num">51篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12112329.html" data-report-click="{&quot;mod&quot;:&quot;popu_826&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4230&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12112329.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 大模型专题系列 </span> <span class="pay-tag">付费</span> </a> <span class="special-column-num">111篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12839889.html" data-report-click="{&quot;mod&quot;:&quot;popu_826&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4230&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12839889.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756925.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> Pytorch入门到精通 </span> <span class="pay-tag">付费</span> </a> <span class="special-column-num">70篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12839894.html" data-report-click="{&quot;mod&quot;:&quot;popu_826&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4230&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12839894.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756926.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 图神经网络入门到精通 </span> <span class="pay-tag">付费</span> </a> <span class="special-column-num">29篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12830452.html" data-report-click="{&quot;mod&quot;:&quot;popu_826&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4230&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12830452.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756923.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> CUDA C++编程系列专题 </span> <span class="pay-tag">付费</span> </a> <span class="special-column-num">25篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_13009690.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_13009690.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/direct/41ab45af3c8e4386b1b8ae65a2f8c430.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 模型加速 </span> </a> <span class="special-column-num">13篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12233032.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12233032.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756919.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 多模态模型Paper阅读 </span> </a> <span class="special-column-num">50篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_13002429.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_13002429.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/direct/3d48a709d13b4e9e8b5962513c851930.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 强化学习 </span> </a> <span class="special-column-num">23篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12871440.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12871440.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 文本模型Paper阅读 </span> </a> <span class="special-column-num">78篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12019969.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12019969.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756925.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 爬虫 </span> </a> <span class="special-column-num">3篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12246547.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12246547.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756930.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 数据结构 </span> </a> <span class="special-column-num">32篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11977596.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11977596.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756757.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 机器学习 </span> </a> <span class="special-column-num">8篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12762530.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12762530.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756918.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> Git </span> </a> <span class="special-column-num">9篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12649193.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12649193.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> C++ </span> </a> <span class="special-column-num">7篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12872574.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12872574.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756738.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 视觉模型Paper阅读 </span> </a> <span class="special-column-num">27篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12934780.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12934780.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756757.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 语音模型Paper阅读 </span> </a> <span class="special-column-num">8篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12995820.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12995820.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/direct/b9d4e053b9e24833b77397c48be07bd7.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> Paper阅读 </span> </a> <span class="special-column-num">90篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12912655.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12912655.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756724.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 前端 </span> </a> <span class="special-column-num">4篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11702144.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11702144.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> k8s </span> </a> <span class="special-column-num">29篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12425440.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12425440.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 数据库 </span> </a> <span class="special-column-num">1篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11832293.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11832293.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756928.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> java </span> </a> <span class="special-column-num">2篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_12019869.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_12019869.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756754.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 其他 </span> </a> <span class="special-column-num">3篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11593561.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11593561.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 图神经网络Paper阅读 </span> </a> <span class="special-column-num">10篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11390353.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11390353.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756925.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> python </span> </a> <span class="special-column-num">62篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11390367.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11390367.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756724.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> linux </span> </a> <span class="special-column-num">44篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11594581.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11594581.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/blog_column_migrate/974bb3dc0e18bc4c3b83347853565ffa.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 推荐系统 </span> </a> <span class="special-column-num">8篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11390351.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11390351.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/blog_column_migrate/4e6a5160c63a16aed96933ce2b23bed2.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> 大数据 </span> </a> <span class="special-column-num">7篇</span> </li> 
+          <li> <a class="clearfix special-column-name" href="https://blog.csdn.net/qq_39698985/category_11324647.html" data-report-click="{&quot;mod&quot;:&quot;popu_537&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4137&quot;,&quot;strategy&quot;:&quot;pc付费专栏左侧入口&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985/category_11324647.html&quot;,&quot;ab&quot;:&quot;new&quot;}"> 
+            <div class="special-column-bar "></div> <img src="https://i-blog.csdnimg.cn/columns/default/20201014180756927.png?x-oss-process=image/resize,m_fixed,h_64,w_64" alt="" onerror="this.src='https://i-blog.csdnimg.cn/columns/default/20201014180756922.png?x-oss-process=image/resize,m_fixed,h_64,w_64'"> <span class=""> docker </span> </a> <span class="special-column-num">10篇</span> </li> 
+         </ul> 
+        </div> 
+        <p class="text-center"> <a class="flexible-btn-new" data-report-click="{&quot;spm&quot;:&quot;3001.10783&quot;,&quot;strategy&quot;:&quot;展开全部&quot;}" data-traigger="true" data-maxheight="0" data-minheight="208px" data-fbox="#aside-content-column" data-flag="flag"><span class="text">展开全部</span> <img class="look-more" src="https://csdnimg.cn/release/blogv2/dist/pc/img/arrowup-line-bot-White.png" alt=""></a> <a class="flexible-btn-new-close" data-report-click="{&quot;spm&quot;:&quot;3001.10783&quot;,&quot;strategy&quot;:&quot;收起&quot;}" data-traigger="true" data-minheight="208px" data-fbox="#aside-content-column" data-scroll="true" data-flag="flag"><span class="text">收起</span> <img class="look-more" src="https://csdnimg.cn/release/blogv2/dist/pc/img/arrowup-line-top-White.png" alt=""></a> </p> 
+       </div> 
+      </div> 
+     </div> 
+    </aside> 
+   </div> 
+   <div class="recommend-right1  align-items-stretch clearfix" id="rightAsideConcision" data-type="recommend"> 
+    <aside class="recommend-right_aside"> 
+     <div id="recommend-right-concision"> 
+      <div class="flex-column aside-box groupfile" id="groupfileConcision"> 
+       <div class="groupfile-div1"> 
+        <h3 class="aside-title">目录</h3> 
+        <div class="align-items-stretch group_item"> 
+         <div class="pos-box"> 
+          <div class="scroll-box"> 
+           <div class="toc-box"></div> 
+          </div> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+    </aside> 
+   </div> 
+  </div> 
+  <div class="mask-dark"></div> 
+  <div class="skin-boxshadow"></div> 
+  <div class="directory-boxshadow"></div> 
+  <div class="comment-side-box-shadow comment-side-tit-close" id="commentSideBoxshadow"> 
+   <div class="comment-side-content"> 
+    <div class="comment-side-tit"> 
+     <span class="comment-side-tit-count">评论</span> 
+     <img class="comment-side-tit-close" src="https://csdnimg.cn/release/blogv2/dist/pc/img/closeBt.png">
+    </div> 
+    <div id="pcCommentSideBox" class="comment-box comment-box-new2 " style="display:block"> 
+     <div class="comment-edit-box d-flex"> 
+      <div class="user-img"> 
+       <a href="https://blog.csdn.net/2501_92738035" target="_blank"> <img src="https://profile-avatar.csdnimg.cn/011e290256384ff48d72f1d4ae1d9af2_2501_92738035.jpg!1"> </a> 
+      </div> 
+      <form id="commentform"> 
+       <textarea class="comment-content" name="comment_content" id="comment_content" placeholder="欢迎高质量的评论，低质的评论会被折叠" maxlength="1000"></textarea> 
+       <div class="comment-reward-box" style="background-image: url('https://img-home.csdnimg.cn/images/20230131025301.png');"> 
+        <a class="btn-remove-reward"></a> 
+        <div class="form-reward-box"> 
+         <div class="info">
+           成就一亿技术人! 
+         </div> 
+         <div class="price-info">
+           拼手气红包
+          <span class="price">6.0元</span> 
+         </div> 
+        </div> 
+       </div> 
+       <div class="comment-operate-box"> 
+        <div class="comment-operate-l"> 
+         <span id="tip_comment" class="tip">还能输入<em>1000</em>个字符</span> 
+        </div> 
+        <div class="comment-operate-c">
+          &nbsp; 
+        </div> 
+        <div class="comment-operate-r"> 
+         <div class="comment-operate-item comment-reward"> 
+          <img class="comment-operate-img" data-url="https://csdnimg.cn/release/blogv2/dist/pc/img/" src="https://csdnimg.cn/release/blogv2/dist/pc/img/commentReward.png" alt="红包"> 
+          <span class="comment-operate-tip">添加红包</span> 
+         </div> 
+         <div class="comment-operate-item comment-emoticon"> 
+          <img class="comment-operate-img" data-url="https://csdnimg.cn/release/blogv2/dist/pc/img/" src="https://csdnimg.cn/release/blogv2/dist/pc/img/commentEmotionIcon.png" alt="表情包"> 
+          <span class="comment-operate-tip">插入表情</span> 
+          <div class="comment-emoticon-box comment-operate-isshow"> 
+           <div class="comment-emoticon-img-box"></div> 
+          </div> 
+         </div> 
+         <div class="comment-operate-item comment-code"> 
+          <img class="comment-operate-img" data-url="https://csdnimg.cn/release/blogv2/dist/pc/img/" src="https://csdnimg.cn/release/blogv2/dist/pc/img/commentCodeIcon.png" alt="表情包"> 
+          <span class="comment-operate-tip">代码片</span> 
+          <div class="comment-code-box comment-operate-isshow"> 
+           <ul id="commentCode"> 
+            <li><a data-code="html">HTML/XML</a></li> 
+            <li><a data-code="objc">objective-c</a></li> 
+            <li><a data-code="ruby">Ruby</a></li> 
+            <li><a data-code="php">PHP</a></li> 
+            <li><a data-code="csharp">C</a></li> 
+            <li><a data-code="cpp">C++</a></li> 
+            <li><a data-code="javascript">JavaScript</a></li> 
+            <li><a data-code="python">Python</a></li> 
+            <li><a data-code="java">Java</a></li> 
+            <li><a data-code="css">CSS</a></li> 
+            <li><a data-code="sql">SQL</a></li> 
+            <li><a data-code="plain">其它</a></li> 
+           </ul> 
+          </div> 
+         </div> 
+         <div class="comment-operate-item"> 
+          <input type="hidden" id="comment_replyId" name="comment_replyId"> 
+          <input type="hidden" id="article_id" name="article_id" value="145714028"> 
+          <input type="hidden" id="comment_userId" name="comment_userId" value=""> 
+          <input type="hidden" id="commentId" name="commentId" value=""> 
+          <a data-report-click="{&quot;mod&quot;:&quot;1582594662_003&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4227&quot;,&quot;ab&quot;:&quot;new&quot;}"> <input type="submit" class="btn-comment btn-comment-input" value="评论"> </a> 
+         </div> 
+        </div> 
+       </div> 
+      </form> 
+     </div> 
+     <div class="comment-list-container"> 
+      <div class="comment-list-box comment-operate-item"> 
+      </div> 
+      <div id="lookFlodComment" class="look-flod-comment"> 
+       <span class="count"></span>&nbsp;条评论被折叠&nbsp;
+       <a class="look-more-flodcomment">查看</a> 
+      </div> 
+      <div class="opt-box text-center"> 
+       <div class="btn btn-sm btn-link-blue" id="btnMoreComment"></div> 
+      </div> 
+     </div> 
+    </div> 
+    <div id="pcFlodCommentSideBox" class="pc-flodcomment-sidebox"> 
+     <div class="comment-fold-tit">
+      <span id="lookUnFlodComment" class="back"><img src="https://csdnimg.cn/release/blogv2/dist/pc/img/commentArrowLeftWhite.png" alt=""></span>被折叠的&nbsp;
+      <span class="count"></span>&nbsp;条评论 
+      <a href="https://blogdev.blog.csdn.net/article/details/122245662" class="tip" target="_blank">为什么被折叠?</a> 
+      <a href="https://bbs.csdn.net/forums/FreeZone" class="park" target="_blank"> <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconPark.png">到【灌水乐园】发言</a> 
+     </div> 
+     <div class="comment-fold-content"></div> 
+     <div id="lookBadComment" class="look-bad-comment side-look-comment"> 
+      <a class="look-more-comment">查看更多评论<img src="https://csdnimg.cn/release/blogv2/dist/pc/img/commentArrowDownWhite.png" alt=""></a> 
+     </div> 
+    </div> 
+   </div> 
+   <div class="comment-rewarddialog-box"> 
+    <div class="form-box"> 
+     <div class="title-box">
+       添加红包 
+      <a class="btn-form-close"></a> 
+     </div> 
+     <form id="commentRewardForm"> 
+      <div class="ipt-box"> 
+       <label for="txtName">祝福语</label> 
+       <div class="ipt-btn-box"> 
+        <input type="text" name="name" id="txtName" autocomplete="off" maxlength="50"> 
+        <a class="btn-ipt btn-random"></a> 
+       </div> 
+       <p class="notice">请填写红包祝福语或标题</p> 
+      </div> 
+      <div class="ipt-box"> 
+       <label for="txtSendAmount">红包数量</label> 
+       <div class="ipt-txt-box"> 
+        <input type="text" name="sendAmount" maxlength="4" id="txtSendAmount" placeholder="请填写红包数量(最小10个)" autocomplete="off"> 
+        <span class="after-txt">个</span> 
+       </div> 
+       <p class="notice">红包个数最小为10个</p> 
+      </div> 
+      <div class="ipt-box"> 
+       <label for="txtMoney">红包总金额</label> 
+       <div class="ipt-txt-box error"> 
+        <input type="text" name="money" maxlength="5" id="txtMoney" placeholder="请填写总金额(最低5元)" autocomplete="off"> 
+        <span class="after-txt">元</span> 
+       </div> 
+       <p class="notice">红包金额最低5元</p> 
+      </div> 
+      <div class="balance-info-box"> 
+       <label>余额支付</label> 
+       <div class="balance-info">
+         当前余额
+        <span class="balance">3.43</span>元 
+        <a href="https://i.csdn.net/#/wallet/balance/recharge" class="link-charge" target="_blank">前往充值 &gt;</a> 
+       </div> 
+      </div> 
+      <div class="opt-box"> 
+       <div class="pay-info">
+         需支付：
+        <span class="price">10.00</span>元 
+       </div> 
+       <button type="button" class="ml-auto btn-cancel">取消</button> 
+       <button type="button" class="ml8 btn-submit" disabled="true">确定</button> 
+      </div> 
+     </form> 
+    </div> 
+   </div> 
+   <div class="rr-guide-box"> 
+    <div class="rr-first-box"> 
+     <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/guideRedReward02.png" alt=""> 
+     <button class="btn-guide-known next">下一步</button> 
+    </div> 
+    <div class="rr-second-box"> 
+     <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/guideRedReward03.png" alt=""> 
+     <button class="btn-guide-known known">知道了</button> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="redEnvolope" id="redEnvolope"> 
+   <div class="env-box"> 
+    <div class="env-container"> 
+     <div class="pre-open" id="preOpen"> 
+      <div class="top"> 
+       <header> 
+        <img class="clearTpaErr" :src="redpacketAuthor.avatar" alt=""> 
+        <div class="author">
+         成就一亿技术人!
+        </div> 
+       </header> 
+       <div class="bot-icon"></div> 
+      </div> 
+      <footer> 
+       <div class="red-openbtn open-start"></div> 
+       <div class="tip">
+         领取后你会自动成为博主和红包主的粉丝 
+        <a class="rule" target="_blank">规则</a> 
+       </div> 
+      </footer> 
+     </div> 
+     <div class="opened" id="opened"> 
+      <div class="bot-icon"> 
+       <header> 
+        <a class="creatorUrl" href="" target="_blank"> <img class="clearTpaErr" src="https://profile-avatar.csdnimg.cn/default.jpg!2" alt=""> </a> 
+        <div class="author"> 
+         <div class="tt">
+          hope_wisdom
+         </div> 发出的红包 
+        </div> 
+       </header> 
+      </div> 
+      <div class="receive-box"> 
+       <header></header> 
+       <div class="receive-list"> 
+       </div> 
+      </div> 
+     </div> 
+    </div> 
+    <div class="close-btn"></div> 
+   </div> 
+  </div> 
+  <div id="rewardNew" class="reward-popupbox-new"> 
+   <p class="rewad-title">打赏作者<span class="reward-close"><img src="https://csdnimg.cn/release/blogv2/dist/pc/img/closeBt.png"></span></p> 
+   <dl class="profile-box"> 
+    <dd> 
+     <a href="https://blog.csdn.net/qq_39698985" data-report-click="{&quot;mod&quot;:&quot;popu_379&quot;,&quot;dest&quot;:&quot;https://blog.csdn.net/qq_39698985&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img src="https://i-avatar.csdnimg.cn/ab62205193b84b71b0ffc27cb2042a93_qq_39698985.jpg!1" class="avatar_pic"> </a> 
+    </dd> 
+    <dt> 
+     <p class="blog-name">AI专题精讲</p> 
+     <p class="blog-discript">你的鼓励将是我创作的最大动力</p> 
+    </dt> 
+   </dl> 
+   <div class="reward-box-new"> 
+    <div class="reward-content">
+     <div class="reward-right"></div>
+    </div> 
+   </div> 
+   <div class="money-box"> 
+    <span class="choose-money choosed" data-id="1">¥1</span> 
+    <span class="choose-money " data-id="2">¥2</span> 
+    <span class="choose-money " data-id="4">¥4</span> 
+    <span class="choose-money " data-id="6">¥6</span> 
+    <span class="choose-money " data-id="10">¥10</span> 
+    <span class="choose-money " data-id="20">¥20</span> 
+   </div> 
+   <div class="sure-box"> 
+    <div class="sure-box-money"> 
+     <div class="code-box"> 
+      <div class="code-num-box"> 
+       <span class="code-name">扫码支付：</span>
+       <span class="code-num">¥1</span> 
+      </div> 
+      <div class="code-img-box"> 
+       <div class="renovate"> 
+        <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/pay-time-out.png"> 
+        <span>获取中</span> 
+       </div> 
+      </div> 
+      <div class="code-pay-box"> 
+       <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/newWeiXin.png" alt=""> 
+       <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/newZhiFuBao.png" alt=""> 
+       <span>扫码支付</span> 
+      </div> 
+     </div> 
+    </div> 
+    <div class="sure-box-blance"> 
+     <p class="tip">您的余额不足，请更换扫码支付或<a target="_blank" data-report-click="{&quot;mod&quot;:&quot;1597646289_003&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4302&quot;}" href="https://i.csdn.net/#/wallet/balance/recharge?utm_source=RewardVip" class="go-invest">充值</a></p> 
+     <p class="is-have-money"><a class="reward-sure">打赏作者</a></p> 
+    </div> 
+   </div> 
+  </div> 
+  <div class="pay-code"> 
+   <div class="pay-money">
+    实付
+    <span class="pay-money-span" data-nowprice="" data-oldprice="">元</span>
+   </div> 
+   <div class="content-blance">
+    <a class="blance-bt" href="javascript:;">使用余额支付</a>
+   </div> 
+   <div class="content-code"> 
+    <div id="payCode" data-id=""> 
+     <div class="renovate"> 
+      <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/pay-time-out.png"> 
+      <span>点击重新获取</span> 
+     </div> 
+    </div> 
+    <div class="pay-style">
+     <span><img src="https://csdnimg.cn/release/blogv2/dist/pc/img/weixin.png"></span>
+     <span><img src="https://csdnimg.cn/release/blogv2/dist/pc/img/zhifubao.png"></span>
+     <span><img src="https://csdnimg.cn/release/blogv2/dist/pc/img/jingdong.png"></span>
+     <span class="text">扫码支付</span>
+    </div> 
+   </div> 
+   <div class="bt-close"> 
+    <svg t="1567152543821" class="icon" viewbox="0 0 1024 1024" version="1.1" xmlns="http://www.w3.org/2000/svg" p-id="10924" xmlns:xlink="http://www.w3.org/1999/xlink" width="12" height="12"> 
+     <defs> 
+      <style type="text/css"></style> 
+     </defs> 
+     <path d="M512 438.378667L806.506667 143.893333a52.032 52.032 0 1 1 73.6 73.621334L585.621333 512l294.485334 294.485333a52.074667 52.074667 0 0 1-73.6 73.642667L512 585.621333 217.514667 880.128a52.053333 52.053333 0 1 1-73.621334-73.642667L438.378667 512 143.893333 217.514667a52.053333 52.053333 0 1 1 73.621334-73.621334L512 438.378667z" fill="" p-id="10925"></path> 
+    </svg> 
+   </div> 
+   <div class="pay-balance"> 
+    <input type="radio" class="pay-code-radio" data-type="details"> 
+    <span class="span">钱包余额</span> 
+    <span class="balance" style="color:#FC5531;font-size:14px;">0</span> 
+    <div class="pay-code-tile"> 
+     <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/pay-help.png" alt=""> 
+     <div class="pay-code-content"> 
+      <div class="span"> 
+       <p class="title">抵扣说明：</p> 
+       <p> 1.余额是钱包充值的虚拟货币，按照1:1的比例进行支付金额的抵扣。<br> 2.余额无法直接购买下载，可以购买VIP、付费专栏及课程。</p> 
+      </div> 
+     </div> 
+    </div> 
+   </div> 
+   <a class="pay-balance-con" href="https://i.csdn.net/#/wallet/balance/recharge" target="_blank"><img src="https://csdnimg.cn/release/blogv2/dist/pc/img/recharge.png" alt=""><span>余额充值</span></a> 
+  </div>  
+  <div class="keyword-dec-box" id="keywordDecBox"></div>       
+  <link rel="stylesheet" href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css"> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/dracula.css">                    
+ </body>
+</html>

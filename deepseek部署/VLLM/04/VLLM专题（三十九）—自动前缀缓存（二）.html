@@ -1,0 +1,455 @@
+<!doctype html>
+<html lang="zh-CN">
+ <head> 
+  <meta charset="utf-8"> 
+  <link rel="canonical" href="https://blog.csdn.net/qq_39698985/article/details/146325312"> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+  <meta name="renderer" content="webkit"> 
+  <meta name="force-rendering" content="webkit"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+  <meta name="report" content="{&quot;pid&quot;: &quot;blog&quot;, &quot;spm&quot;:&quot;1001.2101&quot;}"> 
+  <meta name="referrer" content="always"> 
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+  <link rel="alternate" media="handheld" href="#">  
+  <meta name="applicable-device" content="pc"> 
+  <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"> 
+  <title>VLLM专题（三十九）—自动前缀缓存（二）_prefix cache-CSDN博客</title>   
+  <meta name="keywords" content="prefix cache"> 
+  <meta name="csdn-baidu-search" content="{&quot;autorun&quot;:true,&quot;install&quot;:true,&quot;keyword&quot;:&quot;prefix cache&quot;}"> 
+  <meta name="description" content="文章浏览阅读490次。前缀缓存（Prefix Caching）是一种在LLM推理中广泛使用的优化技术，旨在避免冗余的提示词（prompt）计算。其核心思想很简单——我们缓存已处理请求的键值缓存（kv-cache）块，并在新请求的前缀与之前请求相同时重用这些块。由于前缀缓存几乎是一种“免费的午餐”，并且不会改变模型输出，因此它已被许多公共端点（例如OpenAI、Anthropic等）和大多数开源LLM推理框架（例如SGLang）广泛采用。尽管实现前缀缓存的方法有很多，但vLLM选择了一种基于哈希的方法。_prefix cache"> 
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-4293fe592f.min.css"> 
+  <style>
+        #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+    </style>  
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin-yellow/skin-yellow-28d34ab5fa.min.css">    
+  <meta name="toolbar" content="{&quot;type&quot;:&quot;0&quot;,&quot;fixModel&quot;:&quot;1&quot;}">    
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css"> 
+  <style>
+        .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+    </style>      
+ 	<style>
+	main div.blog-content-box pre {
+		max-height: 100%;
+		overflow-y: hidden;
+	}
+	</style>
+ </head>  
+ <body class="nodata  " style=""> 
+  <div id="toolbarBox" style="min-height: 48px;"></div>    
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css"> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css"> 
+  <link rel="stylesheet" href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css">   
+  <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;"> 
+   <div class="container clearfix container-concision" id="mainBox">  
+    <main>  
+     <div class="blog-content-box"> 
+      <div class="article-header-box"> 
+       <div class="article-header"> 
+        <div class="article-title-box"> 
+         <h1 class="title-article" id="articleContentId">VLLM专题（三十九）—自动前缀缓存（二）</h1> 
+        </div> 
+        <div class="article-info-box"> 
+         <div class="article-bar-top-box"> 
+          <div class="article-bar-top"> 
+           <img class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png" alt=""> 
+           <div class="bar-content"> 
+            <a class="follow-nickName " href="https://blog.csdn.net/qq_39698985" target="_blank" rel="noopener" title="AI专题精讲">AI专题精讲</a> 
+            <img class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png" alt=""> 
+            <span class="time">已于&nbsp;2025-03-19 10:08:46&nbsp;修改</span> 
+            <div class="read-count-box"> 
+             <img class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png" alt=""> 
+             <span class="read-count">阅读量490</span> 
+             <a id="blog_detail_zk_collection" class="un-collection" data-report-click="{&quot;mod&quot;:&quot;popu_823&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4232&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img class="article-collect-img article-heard-img un-collect-status isdefault" style="display:inline-block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" alt=""> <img class="article-collect-img article-heard-img collect-status isactive" style="display:none" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" alt=""> <span class="name">收藏</span> <span class="get-collection"> </span> </a> 
+             <div class="read-count-box is-like" data-type="top"> 
+              <img class="article-read-img article-heard-img" style="display:none" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" alt=""> 
+              <img class="article-read-img article-heard-img" style="display:block" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" alt=""> 
+              <span class="read-count" id="blog-digg-num">点赞数 </span> 
+             </div> 
+            </div> 
+           </div> 
+          </div> 
+          <div class="operating"> 
+           <a class="href-article-edit slide-toggle">CC 4.0 BY-SA版权</a> 
+          </div> 
+         </div> 
+         <div class="blog-tags-box"> 
+          <div class="tags-box artic-tag-box"> 
+           <span class="label">分类专栏：</span> 
+           <a class="tag-link" href="https://blog.csdn.net/qq_39698985/category_12112329.html" target="_blank" rel="noopener">大模型专题系列</a> 
+           <span class="label">文章标签：</span> 
+           <a rel="noopener" data-report-query="spm=1001.2101.3001.4223" data-report-click="{&quot;mod&quot;:&quot;popu_626&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4223&quot;,&quot;strategy&quot;:&quot;缓存&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;extra&quot;:&quot;{\&quot;searchword\&quot;:\&quot;缓存\&quot;}&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_626&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4223&quot;,&quot;strategy&quot;:&quot;缓存&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;extra&quot;:&quot;{\&quot;searchword\&quot;:\&quot;缓存\&quot;}&quot;}" class="tag-link" href="https://so.csdn.net/so/search/s.do?q=%E7%BC%93%E5%AD%98&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" target="_blank">缓存</a> 
+           <a rel="noopener" data-report-query="spm=1001.2101.3001.4223" data-report-click="{&quot;mod&quot;:&quot;popu_626&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4223&quot;,&quot;strategy&quot;:&quot;哈希算法&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;extra&quot;:&quot;{\&quot;searchword\&quot;:\&quot;哈希算法\&quot;}&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_626&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4223&quot;,&quot;strategy&quot;:&quot;哈希算法&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;extra&quot;:&quot;{\&quot;searchword\&quot;:\&quot;哈希算法\&quot;}&quot;}" class="tag-link" href="https://so.csdn.net/so/search/s.do?q=%E5%93%88%E5%B8%8C%E7%AE%97%E6%B3%95&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" target="_blank">哈希算法</a> 
+           <a rel="noopener" data-report-query="spm=1001.2101.3001.4223" data-report-click="{&quot;mod&quot;:&quot;popu_626&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4223&quot;,&quot;strategy&quot;:&quot;算法&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;extra&quot;:&quot;{\&quot;searchword\&quot;:\&quot;算法\&quot;}&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_626&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4223&quot;,&quot;strategy&quot;:&quot;算法&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;extra&quot;:&quot;{\&quot;searchword\&quot;:\&quot;算法\&quot;}&quot;}" class="tag-link" href="https://so.csdn.net/so/search/s.do?q=%E7%AE%97%E6%B3%95&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" target="_blank">算法</a> 
+          </div> 
+         </div> 
+         <div class="up-time">
+          <span>于&nbsp;2025-03-19 09:11:21&nbsp;首次发布</span>
+         </div> 
+         <div class="slide-content-box"> 
+          <div class="article-copyright"> 
+           <div class="creativecommons">
+             版权声明：本文为博主原创文章，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>版权协议，转载请附上原文出处链接和本声明。 
+           </div> 
+           <div class="article-source-link">
+             本文链接：
+            <a href="https://blog.csdn.net/qq_39698985/article/details/146325312" target="_blank">https://blog.csdn.net/qq_39698985/article/details/146325312</a> 
+           </div> 
+          </div> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+      <div id="blogHuaweiyunAdvert" class=""></div> 
+      <div id="blogColumnPayAdvert" class=""> 
+       <div class="column-group"> 
+        <div class="column-group-item column-group0 column-group-item-one"> 
+         <div class="item-l"> 
+          <a class="item-target" href="https://blog.csdn.net/qq_39698985/category_12112329.html" target="_blank" title="大模型专题系列" data-report-view="{&quot;spm&quot;:&quot;1001.2101.3001.6332&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.6332&quot;}"> <img class="item-target" src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_224,w_224" alt=""> <span class="title item-target"> <span> <span class="tit">大模型专题系列</span> <span class="dec">专栏收录该内容</span> </span> </span> </a> 
+         </div> 
+         <div class="item-m"> 
+          <span>111 篇文章</span> 
+          <span class="old-add-new-box"> <span class="price">¥49.90</span> <span class="oldprice">¥99.00</span> </span> 
+         </div> 
+         <div class="item-r"> 
+          <a class="item-target article-column-subscribe">已订阅 </a> 
+          <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-view="{&quot;spm&quot;:&quot;1001.2015.3001.8590&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2015.3001.8590&quot;}">8折续费 </a> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="learning_the_member_box"> 
+       <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank"> 
+        <div class="left">
+         <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png" alt="">
+         <span>您已是超级会员，正在免费阅读会员专享内容</span>
+        </div> 
+        <div class="right">
+         <span>查看更多超级会员权益</span>
+         <img src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png" alt="">
+        </div> </a> 
+      </div> 
+      <article class="baidu_pl"> 
+       <div id="article_content" class="article_content clearfix"> 
+        <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css"> 
+        <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-01addd087f.css"> 
+        <div id="content_views" class="markdown_views prism-dracula"> 
+         <svg xmlns="http://www.w3.org/2000/svg" style="display: none;"> 
+          <path stroke-linecap="round" d="M5,0 0,2.5 5,5z" id="raphael-marker-block" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path> 
+         </svg> 
+         <p>前缀缓存（Prefix Caching）是一种在LLM推理中广泛使用的优化技术，旨在避免冗余的提示词（prompt）计算。其核心思想很简单——我们缓存已处理请求的键值缓存（kv-cache）块，并在新请求的前缀与之前请求相同时重用这些块。由于前缀缓存几乎是一种“免费的午餐”，并且不会改变模型输出，因此它已被许多公共端点（例如OpenAI、Anthropic等）和大多数开源LLM推理框架（例如SGLang）广泛采用。</p> 
+         <p>尽管实现前缀缓存的方法有很多，但vLLM选择了一种基于哈希的方法。具体来说，我们通过对每个kv-cache块中的token以及该块之前的prefix中的token进行哈希来标识缓存块。</p> 
+         <pre><code class="prism language-bash">                    Block <span class="token number">1</span>                  Block <span class="token number">2</span>                  Block <span class="token number">3</span>
+         <span class="token punctuation">[</span>A gentle breeze stirred<span class="token punctuation">]</span> <span class="token punctuation">[</span>the leaves as children<span class="token punctuation">]</span> <span class="token punctuation">[</span>laughed <span class="token keyword">in</span> the distance<span class="token punctuation">]</span>
+Block <span class="token number">1</span>: <span class="token operator">|</span><span class="token operator">&lt;</span>--- block tokens ----<span class="token operator">&gt;|</span>
+Block <span class="token number">2</span>: <span class="token operator">|</span><span class="token operator">&lt;</span>------- prefix ------<span class="token operator">&gt;|</span> <span class="token operator">|</span><span class="token operator">&lt;</span>--- block tokens ---<span class="token operator">&gt;|</span>
+Block <span class="token number">3</span>: <span class="token operator">|</span><span class="token operator">&lt;</span>------------------ prefix --------------------<span class="token operator">&gt;|</span> <span class="token operator">|</span><span class="token operator">&lt;</span>--- block tokens ----<span class="token operator">&gt;|</span>
+</code ></pre> 
+         <p>在上面的示例中，第一个块的KV缓存可以通过token“A gentle breeze stirred”唯一标识。第三个块可以通过块中的token“laughed in the distance”以及前缀token“A gentle breeze stirred the leaves as children”唯一标识。因此，我们可以构建块的哈希值<code>hash(tuple[components])</code >，其中<code>components</code >包括：</p> 
+         <ol>
+          <li><strong>父哈希值</strong>：父哈希块的哈希值。</li>
+          <li><strong>块中的token</strong>：该块中的token元组。包含确切token的原因是为了减少潜在的哈希值冲突。</li>
+          <li><strong>额外哈希值</strong>：使该块唯一所需的其他值，例如LoRA ID和多模态输入哈希值（见下面的示例）。</li>
+         </ol> 
+         <p><strong>注意1</strong>：我们只缓存完整的块。</p> 
+         <p><strong>注意2</strong>：上述哈希键结构并非100%无冲突。理论上，不同的前缀token仍有可能具有相同的哈希值，但这几乎不可能发生。当然，如果您有绝妙的想法可以完全消除冲突，欢迎贡献代码。</p> 
+         <p><strong>多模态输入的哈希示例</strong></p> 
+         <p>在这个示例中，我们展示了前缀缓存在多模态输入（例如图像）情况下的工作原理。假设我们有一个包含以下消息的请求：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-bash">messages <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token punctuation">{
+            <!-- --></span><span class="token string">"role"</span><span class="token builtin class-name">:</span> <span class="token string">"user"</span>,
+     <span class="token string">"content"</span><span class="token builtin class-name">:</span> <span class="token punctuation">[</span>
+         <span class="token punctuation">{
+            <!-- --></span><span class="token string">"type"</span><span class="token builtin class-name">:</span> <span class="token string">"text"</span>,
+          <span class="token string">"text"</span><span class="token builtin class-name">:</span> <span class="token string">"What's in this image?"</span>
+         <span class="token punctuation">}</span>,
+         <span class="token punctuation">{
+            <!-- --></span><span class="token string">"type"</span><span class="token builtin class-name">:</span> <span class="token string">"image_url"</span>,
+          <span class="token string">"image_url"</span><span class="token builtin class-name">:</span> <span class="token punctuation">{
+            <!-- --></span><span class="token string">"url"</span><span class="token builtin class-name">:</span> image_url<span class="token punctuation">}</span>,
+         <span class="token punctuation">}</span>,
+    <span class="token punctuation">]</span><span class="token punctuation">}</span>,
+<span class="token punctuation">]</span>
+</code ></pre> 
+         <p>它将生成以下提示词（prompt）：</p> 
+         <pre><code class="prism language-bash">Prompt:
+    <span class="token operator">&lt;</span>s<span class="token operator">&gt;</span><span class="token punctuation">[</span>INST<span class="token punctuation">]</span>What's <span class="token keyword">in</span> this image?<span class="token punctuation">\</span>n<span class="token punctuation">[</span>IMG<span class="token punctuation">]</span><span class="token punctuation">[</span>/INST<span class="token punctuation">]</span>
+
+Tokenized prompt:
+    <span class="token punctuation">[</span><span class="token number">1</span>, <span class="token number">3</span>, <span class="token number">7493</span>, <span class="token number">1681</span>, <span class="token number">1294</span>, <span class="token number">1593</span>, <span class="token number">3937</span>, <span class="token number">9551</span>, <span class="token number">10</span>, <span class="token number">4</span><span class="token punctuation">]</span>
+
+Prompt with placeholders <span class="token punctuation">(</span><span class="token operator">&lt;</span>P<span class="token operator">&gt;</span><span class="token punctuation">)</span>:
+    <span class="token punctuation">[</span><span class="token number">1</span>, <span class="token number">3</span>, <span class="token number">7493</span>, <span class="token number">1681</span>, <span class="token number">1294</span>, <span class="token number">1593</span>, <span class="token number">3937</span>, <span class="token number">9551</span>, <span class="token operator">&lt;</span>P<span class="token operator">&gt;</span>, <span class="token operator">&lt;</span>P<span class="token operator">&gt;</span>, <span class="token punctuation">..</span>., <span class="token operator">&lt;</span>P<span class="token operator">&gt;</span>, <span class="token number">4</span><span class="token punctuation">]</span>
+</code ></pre> 
+         <p>如我们所见，分词后，<code>[IMG]</code >将被一系列占位符token替换，这些占位符将在预填充（prefill）阶段被图像嵌入（image embeddings）替换。前缀缓存在支持这种情况时面临的挑战是，我们需要将图像与占位符区分开来。为了解决这个问题，我们对前端图像处理器生成的图像哈希进行编码。例如，上述提示词中块的哈希值将如下所示（假设块大小为16，并且我们有41个占位符token）：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-bash">Block <span class="token number">0</span>
+    Parent hash: None
+    Token IDs: <span class="token number">1</span>, <span class="token number">3</span>, <span class="token number">7493</span>, <span class="token number">1681</span>, <span class="token number">1294</span>, <span class="token number">1593</span>, <span class="token number">3937</span>, <span class="token number">9551</span>, <span class="token operator">&lt;</span>p<span class="token operator">&gt;</span>, <span class="token punctuation">..</span>., <span class="token operator">&lt;</span>p<span class="token operator">&gt;</span>
+    Extra hash: <span class="token operator">&lt;</span>image hash<span class="token operator">&gt;</span>
+Block <span class="token number">1</span>
+    Parent hash: Block <span class="token number">0</span> <span class="token builtin class-name">hash</span>
+    Token IDs: <span class="token operator">&lt;</span>p<span class="token operator">&gt;</span>, <span class="token punctuation">..</span>., <span class="token operator">&lt;</span>p<span class="token operator">&gt;</span>
+    Extra hash: <span class="token operator">&lt;</span>image hash<span class="token operator">&gt;</span>
+Block <span class="token number">2</span>
+    Parent hash: Block <span class="token number">1</span> <span class="token builtin class-name">hash</span>
+    Token IDs: <span class="token operator">&lt;</span>p<span class="token operator">&gt;</span>, <span class="token punctuation">..</span>., <span class="token operator">&lt;</span>p<span class="token operator">&gt;</span>
+    Extra hash: <span class="token operator">&lt;</span>image hash<span class="token operator">&gt;</span>
+Block <span class="token number">3</span>
+    Parent hash: Block <span class="token number">2</span> <span class="token builtin class-name">hash</span>
+    Token IDs: <span class="token operator">&lt;</span>p<span class="token operator">&gt;</span>, <span class="token punctuation">..</span>., <span class="token operator">&lt;</span>p<span class="token operator">&gt;</span>, <span class="token number">4</span>
+    Extra hash: <span class="token operator">&lt;</span>image hash<span class="token operator">&gt;</span>
+</code ></pre> 
+         <p>在本文件的其余部分，我们首先介绍 vLLM v1 中用于前缀缓存的数据结构，然后介绍主要 KV 缓存操作符（例如：分配、追加、释放、驱逐）的前缀缓存工作流。最后，我们通过一个示例来说明端到端的前缀缓存工作流。</p> 
+         <h2><a id="1__69"></a>1. 数据结构</h2> 
+         <p>vLLM v1 中的前缀缓存是在 KV 缓存管理器中实现的。基本构建块是“块”（Block）数据类（简化版）：</p> 
+         <pre><code class="prism language-python"><span class="token keyword">class</span> <span class="token class-name">KVCacheBlock</span><span class="token punctuation">:</span>
+    <span class="token comment"># 块的 ID（不可变）</span>
+    block_id<span class="token punctuation">:</span> <span class="token builtin">int</span>
+    <span class="token comment"># 块的哈希（当块满时分配，且当块被驱逐时重置）</span>
+    block_hash<span class="token punctuation">:</span> BlockHashType
+    <span class="token comment"># 当前使用此块的请求数量</span>
+    ref_cnt<span class="token punctuation">:</span> <span class="token builtin">int</span>
+
+    <span class="token comment"># 双向链表的指针，用于形成空闲队列</span>
+    prev_free_block<span class="token punctuation">:</span> Optional<span class="token punctuation">[</span><span class="token string">"KVCacheBlock"</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token boolean">None</span>
+    next_free_block<span class="token punctuation">:</span> Optional<span class="token punctuation">[</span><span class="token string">"KVCacheBlock"</span><span class="token punctuation">]</span> <span class="token operator">=</span> <span class="token boolean">None</span>
+</code ></pre> 
+         <p>有两个设计要点需要强调：</p> 
+         <ol>
+          <li> <p>我们在初始化 KV 缓存管理器时分配所有 KVCacheBlock 作为一个块池。这避免了 Python 对象创建的开销，并且能够轻松追踪所有块的状态。</p> </li>
+          <li> <p>我们在 KVCacheBlock 中直接引入了双向链表指针，以便直接构建一个空闲队列。这给我们带来了两个好处：</p> 
+           <ul>
+            <li>我们可以在 O(1) 时间复杂度下将中间元素移动到队尾。</li>
+            <li>我们可以避免引入另一个 Python 队列（例如：deque），从而避免对元素进行包装。</li>
+           </ul> </li>
+         </ol> 
+         <p>因此，当 KV 缓存管理器初始化时，我们将拥有以下组件：<br> <img src="https://i-blog.csdnimg.cn/direct/505f8006c0bc4350926cf1a12d8c96c1.png" alt="在这里插入图片描述"><br> <strong>块池（Block Pool）</strong>：一个存储<code>KVCacheBlock</code >的列表。<br> <strong>空闲块队列（Free Block Queue）</strong>：仅存储头块和尾块的指针，用于操作。<br> <strong>缓存块（Cache blocks）</strong>：从哈希键到块ID的映射。<br> <strong>请求块（Request blocks）</strong>：从请求ID到已分配块ID的映射。</p> 
+         <h2><a id="2__100"></a>2. 操作</h2> 
+         <p><strong>块分配（Block Allocation）</strong></p> 
+         <p><strong>新请求</strong>：调度器调度新请求并分配KV缓存块的工作流程：</p> 
+         <ol>
+          <li>调度器调用<code>kv_cache_manager.get_computed_blocks()</code >，获取已经计算过的块序列。这是通过对请求中的提示词（prompt tokens）进行哈希并在缓存块（Cache Blocks）中查找来完成的。</li>
+          <li>调度器调用<code>kv_cache_manager.allocate_slots()</code >，执行以下步骤： 
+           <ul>
+            <li>计算需要的新块数量，如果没有足够的块可供分配，则返回。</li>
+            <li>“触碰”（Touch）已计算的块。它将已计算块的引用计数加一，如果该块未被其他请求使用，则将其从空闲队列中移除。这是为了避免这些已计算的块被驱逐。详见下一节的示例说明。</li>
+            <li>通过弹出空闲队列的头部来分配新块。如果头部块是缓存块，则同时“驱逐”该块，以确保其他请求无法再重用该块。</li>
+            <li>如果分配的块已经填满token，则立即将其添加到缓存块（Cache Block）中，以便同一批次中的其他请求可以重用该块。</li>
+           </ul> </li>
+         </ol> 
+         <p><strong>运行中的请求</strong>：调度器调度运行中的请求并分配KV缓存块的工作流程：</p> 
+         <ol>
+          <li>调度器调用<code>kv_cache_manager.append_slots()</code >，执行以下步骤： 
+           <ul>
+            <li>计算需要的新块数量，如果没有足够的块可供分配，则返回。</li>
+            <li>通过弹出空闲队列的头部来分配新块。如果头部块是缓存块，则同时“驱逐”该块，以确保其他请求无法再重用该块。</li>
+            <li>将token ID追加到现有块和新块的槽中。如果块已满，则将其添加到缓存块（Cache Block）中以缓存它。</li>
+           </ul> </li>
+         </ol> 
+         <hr> 
+         <p>** 重复块（Duplicated Blocks）**</p> 
+         <p>假设块大小为4，您发送一个请求（请求1），提示词为<code>ABCDEF</code >，解码长度为3：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-bash">Prompt: <span class="token punctuation">[</span>A, B, C, D, E, F<span class="token punctuation">]</span>
+Output: <span class="token punctuation">[</span>G, H, I<span class="token punctuation">]</span>
+
+Time <span class="token number">0</span>:
+  Tokens: <span class="token punctuation">[</span>A, B, C, D, E, F, G<span class="token punctuation">]</span>
+  Block Table: <span class="token punctuation">[</span><span class="token number">0</span> <span class="token punctuation">(</span>ABCD<span class="token punctuation">)</span>, <span class="token number">1</span> <span class="token punctuation">(</span>EFG<span class="token punctuation">)</span><span class="token punctuation">]</span>
+  Cache Blocks: <span class="token number">0</span>
+Time <span class="token number">1</span>:
+  Tokens: <span class="token punctuation">[</span>A, B, C, D, E, F, G, H<span class="token punctuation">]</span>
+  Block Table: <span class="token punctuation">[</span><span class="token number">0</span> <span class="token punctuation">(</span>ABCD<span class="token punctuation">)</span>, <span class="token number">1</span> <span class="token punctuation">(</span>EFGH<span class="token punctuation">)</span><span class="token punctuation">]</span>
+  Cache Blocks: <span class="token number">0</span>, <span class="token number">1</span>
+Time <span class="token number">2</span>:
+  Tokens: <span class="token punctuation">[</span>A, B, C, D, E, F, G, H, I<span class="token punctuation">]</span>
+  Block Table: <span class="token punctuation">[</span><span class="token number">0</span> <span class="token punctuation">(</span>ABCD<span class="token punctuation">)</span>, <span class="token number">1</span> <span class="token punctuation">(</span>EFGH<span class="token punctuation">)</span>, <span class="token number">2</span> <span class="token punctuation">(</span>I<span class="token punctuation">)</span><span class="token punctuation">]</span>
+  Cache Blocks: <span class="token number">0</span>, <span class="token number">1</span>
+</code ></pre> 
+         <p>此时，块0和块1已被缓存。<br> 现在我们再次发送相同的请求（请求2），并使用贪婪采样（greedy sampling），因此它将生成与请求1完全相同的输出：</p> 
+         <pre><code class="prism language-bash">Prompt: <span class="token punctuation">[</span>A, B, C, D, E, F<span class="token punctuation">]</span>
+Output: <span class="token punctuation">[</span>G, H, I<span class="token punctuation">]</span>
+
+Time <span class="token number">0</span>:
+  Tokens: <span class="token punctuation">[</span>A, B, C, D, E, F, G<span class="token punctuation">]</span>
+  Block Table: <span class="token punctuation">[</span><span class="token number">0</span> <span class="token punctuation">(</span>ABCD<span class="token punctuation">)</span>, <span class="token number">3</span> <span class="token punctuation">(</span>EFG<span class="token punctuation">)</span><span class="token punctuation">]</span>
+  Cache Blocks: <span class="token number">0</span>, <span class="token number">1</span>
+Time <span class="token number">1</span>:
+  Tokens: <span class="token punctuation">[</span>A, B, C, D, E, F, G, H<span class="token punctuation">]</span>
+  Block Table: <span class="token punctuation">[</span><span class="token number">0</span> <span class="token punctuation">(</span>ABCD<span class="token punctuation">)</span>, <span class="token number">3</span> <span class="token punctuation">(</span>EFGH<span class="token punctuation">)</span><span class="token punctuation">]</span>
+  Cache Blocks: <span class="token number">0</span>, <span class="token number">1</span>, <span class="token number">3</span>
+</code ></pre> 
+         <p>可以看到，块3是一个新的已满块，并被缓存。然而，它与块1重复，这意味着我们缓存了相同的块两次。在v0中，当检测到块3重复时，我们会释放块3，并让请求2改用块1，因此在时间1时，其块表变为<code>[0, 1]</code >。然而，在vLLM v1中，块表是仅追加的（append-only），这意味着将块表从<code>[0, 3]</code >更改为<code>[0, 1]</code >是不允许的。因此，我们将为哈希键<code>E-H</code >保留重复的块。这种重复将在请求释放时被消除。</p> 
+         <h3><a id="21_Free_160"></a>2.1 释放（Free）</h3> 
+         <p>当一个请求完成时，如果没有其他请求正在使用其块（引用计数为0），我们将释放该请求的所有块。在这个示例中，我们释放了请求1及其关联的块2、3、4、8。可以看到，释放的块以相反的顺序被添加到空闲队列的尾部。这是因为请求的最后一个块哈希了更多的token，因此被其他请求重用的可能性较低。因此，它应该首先被驱逐。<br> <img src="https://i-blog.csdnimg.cn/direct/5443635008014dc7ae85c9fcdb14333d.png" alt="在这里插入图片描述"></p> 
+         <h3><a id="22_LRU_164"></a>2.2 驱逐（LRU）</h3> 
+         <p>当空闲队列的头部块（最近最少使用的块）被缓存时，我们必须驱逐该块，以防止其他请求使用它。具体来说，驱逐包括以下步骤：</p> 
+         <ol>
+          <li>从空闲队列的头部弹出该块。这是要驱逐的LRU块。</li>
+          <li>从缓存块（Cache Block）中移除该块的ID。</li>
+          <li>移除该块的哈希值。</li>
+         </ol> 
+         <h2><a id="3__171"></a>3. 示例</h2> 
+         <p>在这个示例中，我们假设块大小为4（每个块可以缓存4个token），并且KV缓存管理器中共有10个块。</p> 
+         <p><strong>时间1</strong>：缓存为空，一个新的请求到来。我们分配了4个块。其中3个块已经填满并被缓存。第四个块部分填充，4个token中填充了2个。<br> <img src="https://i-blog.csdnimg.cn/direct/3ce848615ff8454d950ef6786e7f8ad6.png" alt="在这里插入图片描述"><br> <img src="https://i-blog.csdnimg.cn/direct/74384cbc9c7f468888edbad0dba171ac.png" alt="在这里插入图片描述"><br> <img src="https://i-blog.csdnimg.cn/direct/bd5a5f04e2204714ab7c8e848a95f0dd.png" alt="在这里插入图片描述"><br> <img src="https://i-blog.csdnimg.cn/direct/a21464e218794056a5ee557aea8dccc5.png" alt="在这里插入图片描述"></p> 
+        </div> 
+        <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/markdown_views-ecfda744a4.css" rel="stylesheet"> 
+        <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/style-e504d6a974.css" rel="stylesheet"> 
+       </div> 
+       <div id="blogExtensionBox" style="margin-top:12px" class="blog-extension-box"></div> 
+      </article>  
+     </div> 
+     <div class="directory-boxshadow-dialog" style="display:none;"> 
+      <div class="directory-boxshadow-dialog-box"> 
+      </div> 
+      <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new"> 
+       <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"> 
+       <div class="vip-limited-time-top">
+         确定要放弃本次机会？ 
+       </div> 
+       <span class="vip-limited-time-text">福利倒计时</span> 
+       <div class="limited-time-box-new"> 
+        <span class="time-hour"></span> 
+        <i>:</i> 
+        <span class="time-minite"></span> 
+        <i>:</i> 
+        <span class="time-second"></span> 
+       </div> 
+       <div class="limited-time-vip-box"> 
+        <p> <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"> <span class="def">立减 ¥</span> <span class="active limited-num"></span> </p> 
+        <span class="">普通VIP年卡可用</span> 
+       </div> 
+       <a class="limited-time-btn-new" href="https://mall.csdn.net/vip" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.9621&quot;}" data-report-query="spm=1001.2101.3001.9621">立即使用</a> 
+      </div> 
+     </div> 
+     <div class="more-toolbox-new more-toolbar" id="toolBarBox"> 
+      <div class="left-toolbox"> 
+       <div class="toolbox-left"> 
+        <div class="profile-box"> 
+         <a class="profile-href" target="_blank" href="https://blog.csdn.net/qq_39698985"><img class="profile-img" src="https://i-avatar.csdnimg.cn/ab62205193b84b71b0ffc27cb2042a93_qq_39698985.jpg!1"> <span class="profile-name"> AI专题精讲 </span> </a> 
+        </div> 
+        <div class="profile-attend"> 
+         <a class="tool-attend tool-bt-button tool-unbt-attend" href="javascript:;" data-report-view="{&quot;mod&quot;:&quot;1592215036_002&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4232&quot;,&quot;extend1&quot;:&quot;已关注&quot;}">已关注</a> 
+         <a class="tool-item-follow active-animation" style="display:none;">关注</a> 
+        </div> 
+       </div> 
+       <div class="toolbox-middle"> 
+        <ul class="toolbox-list"> 
+         <li class="tool-item tool-item-size tool-active is-like" id="is-like" data-type="bottom"> <a class="tool-item-href"> <img style="display:none;" id="is-like-imgactive-animation-like" class="animation-dom active-animation" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarThumbUpactive.png" alt=""> <img class="isactive" style="display:none" id="is-like-imgactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/like-active.png" alt=""> <img class="isdefault" style="display:block" id="is-like-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/like.png" alt=""> <span id="spanCount" class="count "> 0 </span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">点赞</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active is-unlike" id="is-unlike"> <a class="tool-item-href"> <img class="isactive" style="margin-right:0px;display:none" id="is-unlike-imgactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/unlike-active.png" alt=""> <img class="isdefault" style="margin-right:0px;display:block" id="is-unlike-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/unlike.png" alt=""> <span id="unlikeCount" class="count "></span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">踩</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active is-collection "> <a class="tool-item-href" href="javascript:;" data-report-click="{&quot;mod&quot;:&quot;popu_824&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4130&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img style="display:none" id="is-collection-img-collection" class="animation-dom active-animation" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/collect-active.png" alt=""> <img class="isdefault" id="is-collection-img" style="display:block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/collect.png" alt=""> <img class="isactive" id="is-collection-imgactive" style="display:none" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newCollectActive.png" alt=""> <span class="count get-collection " data-num="0" id="get-collection"> 0 </span> </a> 
+          <div class="tool-hover-tip collect"> 
+           <div class="collect-operate-box"> 
+            <span class="collect-text" id="is-collection"> 收藏 </span> 
+           </div> 
+          </div> 
+          <div class="tool-active-list"> 
+           <div class="text">
+             觉得还不错? 
+            <span class="collect-text" id="tool-active-list-collection"> 一键收藏 </span> 
+            <img id="tool-active-list-close" src="https://csdnimg.cn/release/blogv2/dist/pc/img/collectionCloseWhite.png" alt=""> 
+           </div> 
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active tool-item-comment"> 
+          <div class="guide-rr-first"> 
+           <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/guideRedReward01.png" alt=""> 
+           <button class="btn-guide-known">知道了</button> 
+          </div> <a class="tool-item-href go-side-comment" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.7009&quot;}"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/comment.png" alt=""> <span class="count"> 0 </span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">评论</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active tool-QRcode" data-type="article" id="tool-share"> <a class="tool-item-href" href="javascript:;" data-report-view="{&quot;spm&quot;:&quot;3001.4129&quot;,&quot;extra&quot;:{&quot;type&quot;:&quot;blogdetail&quot;}}"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/share.png" alt=""> <span class="count">分享</span> </a> 
+          <div class="QRcode" id="tool-QRcode"> 
+           <div class="share-bg-box"> 
+            <div class="share-content"> 
+             <a id="copyPosterUrl" data-type="link" class="btn-share">复制链接</a> 
+            </div> 
+            <div class="share-content"> 
+             <a class="btn-share" data-type="qq">分享到 QQ</a> 
+            </div> 
+            <div class="share-content"> 
+             <a class="btn-share" data-type="weibo">分享到新浪微博</a> 
+            </div> 
+            <div class="share-code"> 
+             <div class="share-code-box" id="shareCode"></div> 
+             <div class="share-code-text"> 
+              <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/share/icon-wechat.png" alt="">扫一扫 
+             </div> 
+            </div> 
+           </div> 
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active tool-item-reward"> <a class="tool-item-href" href="javascript:;" data-report-click="{&quot;mod&quot;:&quot;popu_830&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4237&quot;,&quot;dest&quot;:&quot;&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img class="isdefault reward-bt" id="rewardBtNew" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/reward.png" alt="打赏"> <span class="count">打赏</span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">打赏</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active is-more" id="is-more"> <a class="tool-item-href"> <img class="isdefault" style="margin-right:0px;display:block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/more.png" alt=""> <span class="count"></span> </a> 
+          <div class="more-opt-box"> 
+           <div class="mini-box"> 
+            <a class="tool-item-href" id="rewardBtNewHide" data-report-click="{&quot;spm&quot;:&quot;3001.4237&quot;,&quot;extra&quot;:&quot;{\&quot;type\&quot;:\&quot;hide\&quot;}&quot;}"> <img class="isdefault reward-bt" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/reward.png" alt="打赏"> <span class="count">打赏</span> </a> 
+            <a class="tool-item-href" id="toolReportBtnHide"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/report.png" alt=""> <span class="count">举报</span> </a> 
+           </div> 
+           <div class="normal-box"> 
+            <a class="tool-item-href" id="toolReportBtnHideNormal"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/report.png" alt=""> <span class="count">举报</span> </a> 
+           </div> 
+          </div> </li> 
+        </ul> 
+       </div> 
+       <div class="toolbox-right"> 
+        <div class="tool-directory"> 
+         <a class="bt-columnlist-show" data-id="12112329" data-free="false" data-description="自然语言处理" data-subscribe="true" data-title="大模型专题系列" data-img="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_224,w_224" data-url="https://blog.csdn.net/qq_39698985/category_12112329.html" data-sum="111" data-people="16" data-price="49.90" data-hotrank="0" data-status="true" data-oldprice="99.00" data-join="true" data-studyvip="true" data-studysubscribe="true" data-report-view="{&quot;spm&quot;:&quot;1001.2101.3001.6334&quot;,&quot;extend1&quot;:&quot;专栏目录&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.6334&quot;,&quot;extend1&quot;:&quot;专栏目录&quot;}">专栏目录</a> 
+        </div> 
+        <div class="tool-column"> 
+         <a class="tool-bt-button tool-unbt-subscribe" href="javascript:;" data-report-view="{&quot;mod&quot;:&quot;1592215036_001&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4405&quot;,&quot;extend1&quot;:&quot;已订阅&quot;}" data-report-click="{&quot;mod&quot;:&quot;1592215036_001&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4405&quot;,&quot;extend1&quot;:&quot;已订阅&quot;}">已订阅</a> 
+        </div> 
+       </div> 
+      </div> 
+     </div>    
+     <a id="commentBox" name="commentBox"></a> 
+    </main> 
+   </div> 
+   <div class="recommend-right1  align-items-stretch clearfix" id="rightAsideConcision" data-type="recommend"> 
+    <aside class="recommend-right_aside"> 
+     <div id="recommend-right-concision"> 
+      <div class="flex-column aside-box groupfile" id="groupfileConcision"> 
+       <div class="groupfile-div1"> 
+        <h3 class="aside-title">目录</h3> 
+        <div class="align-items-stretch group_item"> 
+         <div class="pos-box"> 
+          <div class="scroll-box"> 
+           <div class="toc-box"></div> 
+          </div> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+    </aside> 
+   </div> 
+  </div> 
+  <div class="mask-dark"></div> 
+  <div class="skin-boxshadow"></div> 
+  <div class="directory-boxshadow"></div> 
+  <div style="display:none;"> 
+   <img src="" onerror="setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){var test=&quot;\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74&quot;}},3000);"> 
+  </div> 
+  <div class="keyword-dec-box" id="keywordDecBox"></div> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css">        
+  <link rel="stylesheet" href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css"> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-dark.css">                  
+ </body>
+</html>

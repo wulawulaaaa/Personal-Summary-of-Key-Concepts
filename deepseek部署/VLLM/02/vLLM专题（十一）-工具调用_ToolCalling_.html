@@ -1,0 +1,542 @@
+<!doctype html>
+<html lang="zh-CN">
+ <head> 
+  <meta charset="utf-8"> 
+  <link rel="canonical" href="https://blog.csdn.net/qq_39698985/article/details/145836715"> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+  <meta name="renderer" content="webkit"> 
+  <meta name="force-rendering" content="webkit"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+  <meta name="report" content="{&quot;pid&quot;: &quot;blog&quot;, &quot;spm&quot;:&quot;1001.2101&quot;}"> 
+  <meta name="referrer" content="always"> 
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+  <link rel="alternate" media="handheld" href="#">  
+  <meta name="applicable-device" content="pc"> 
+  <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"> 
+  <title>vLLM专题（十一）-工具调用(Tool Calling)_vllm 工具调用-CSDN博客</title>   
+  <meta name="keywords" content="vllm 工具调用"> 
+  <meta name="csdn-baidu-search" content="{&quot;autorun&quot;:true,&quot;install&quot;:true,&quot;keyword&quot;:&quot;vllm 工具调用&quot;}"> 
+  <meta name="description" content="文章浏览阅读891次。vLLM 目前支持命名函数调用，以及在聊天补全 API 的字段中支持auto和none选项。选项中的required尚未支持，但已在计划中。_vllm 工具调用"> 
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-4293fe592f.min.css"> 
+  <style>
+        #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+    </style>  
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin-yellow/skin-yellow-28d34ab5fa.min.css">    
+  <meta name="toolbar" content="{&quot;type&quot;:&quot;0&quot;,&quot;fixModel&quot;:&quot;1&quot;}">    
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css"> 
+  <style>
+        .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+    </style>      
+ 	<style>
+	main div.blog-content-box pre {
+		max-height: 100%;
+		overflow-y: hidden;
+	}
+	</style>
+ </head>  
+ <body class="nodata  " style=""> 
+  <div id="toolbarBox" style="min-height: 48px;"></div>    
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css"> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css"> 
+  <link rel="stylesheet" href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css">   
+  <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;"> 
+   <div class="container clearfix container-concision" id="mainBox">  
+    <main>  
+     <div class="blog-content-box"> 
+      <div class="article-header-box"> 
+       <div class="article-header"> 
+        <div class="article-title-box"> 
+         <h1 class="title-article" id="articleContentId">vLLM专题（十一）-工具调用(Tool Calling)</h1> 
+        </div> 
+        <div class="article-info-box"> 
+         <div class="article-bar-top-box"> 
+          <div class="article-bar-top"> 
+           <img class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png" alt=""> 
+           <div class="bar-content"> 
+            <a class="follow-nickName " href="https://blog.csdn.net/qq_39698985" target="_blank" rel="noopener" title="AI专题精讲">AI专题精讲</a> 
+            <img class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png" alt=""> 
+            <span class="time">已于&nbsp;2025-02-24 21:09:22&nbsp;修改</span> 
+            <div class="read-count-box"> 
+             <img class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png" alt=""> 
+             <span class="read-count">阅读量891</span> 
+             <a id="blog_detail_zk_collection" class="un-collection" data-report-click="{&quot;mod&quot;:&quot;popu_823&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4232&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img class="article-collect-img article-heard-img un-collect-status isdefault" style="display:inline-block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" alt=""> <img class="article-collect-img article-heard-img collect-status isactive" style="display:none" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" alt=""> <span class="name">收藏</span> <span class="get-collection"> </span> </a> 
+             <div class="read-count-box is-like" data-type="top"> 
+              <img class="article-read-img article-heard-img" style="display:none" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" alt=""> 
+              <img class="article-read-img article-heard-img" style="display:block" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" alt=""> 
+              <span class="read-count" id="blog-digg-num">点赞数 </span> 
+             </div> 
+            </div> 
+           </div> 
+          </div> 
+          <div class="operating"> 
+           <a class="href-article-edit slide-toggle">CC 4.0 BY-SA版权</a> 
+          </div> 
+         </div> 
+         <div class="blog-tags-box"> 
+          <div class="tags-box artic-tag-box"> 
+           <span class="label">分类专栏：</span> 
+           <a class="tag-link" href="https://blog.csdn.net/qq_39698985/category_12112329.html" target="_blank" rel="noopener">大模型专题系列</a> 
+           <span class="label">文章标签：</span> 
+           <a rel="noopener" data-report-query="spm=1001.2101.3001.4223" data-report-click="{&quot;mod&quot;:&quot;popu_626&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4223&quot;,&quot;strategy&quot;:&quot;人工智能&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;extra&quot;:&quot;{\&quot;searchword\&quot;:\&quot;人工智能\&quot;}&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_626&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4223&quot;,&quot;strategy&quot;:&quot;人工智能&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;extra&quot;:&quot;{\&quot;searchword\&quot;:\&quot;人工智能\&quot;}&quot;}" class="tag-link" href="https://so.csdn.net/so/search/s.do?q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" target="_blank">人工智能</a> 
+          </div> 
+         </div> 
+         <div class="up-time">
+          <span>于&nbsp;2025-02-24 21:02:52&nbsp;首次发布</span>
+         </div> 
+         <div class="slide-content-box"> 
+          <div class="article-copyright"> 
+           <div class="creativecommons">
+             版权声明：本文为博主原创文章，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>版权协议，转载请附上原文出处链接和本声明。 
+           </div> 
+           <div class="article-source-link">
+             本文链接：
+            <a href="https://blog.csdn.net/qq_39698985/article/details/145836715" target="_blank">https://blog.csdn.net/qq_39698985/article/details/145836715</a> 
+           </div> 
+          </div> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+      <div id="blogHuaweiyunAdvert" class=""></div> 
+      <div id="blogColumnPayAdvert" class=""> 
+       <div class="column-group"> 
+        <div class="column-group-item column-group0 column-group-item-one"> 
+         <div class="item-l"> 
+          <a class="item-target" href="https://blog.csdn.net/qq_39698985/category_12112329.html" target="_blank" title="大模型专题系列" data-report-view="{&quot;spm&quot;:&quot;1001.2101.3001.6332&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.6332&quot;}"> <img class="item-target" src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_224,w_224" alt=""> <span class="title item-target"> <span> <span class="tit">大模型专题系列</span> <span class="dec">专栏收录该内容</span> </span> </span> </a> 
+         </div> 
+         <div class="item-m"> 
+          <span>111 篇文章</span> 
+          <span class="old-add-new-box"> <span class="price">¥49.90</span> <span class="oldprice">¥99.00</span> </span> 
+         </div> 
+         <div class="item-r"> 
+          <a class="item-target article-column-subscribe">已订阅 </a> 
+          <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-view="{&quot;spm&quot;:&quot;1001.2015.3001.8590&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2015.3001.8590&quot;}">8折续费 </a> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="learning_the_member_box"> 
+       <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank"> 
+        <div class="left">
+         <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png" alt="">
+         <span>您已是超级会员，正在免费阅读会员专享内容</span>
+        </div> 
+        <div class="right">
+         <span>查看更多超级会员权益</span>
+         <img src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png" alt="">
+        </div> </a> 
+      </div> 
+      <article class="baidu_pl"> 
+       <div id="article_content" class="article_content clearfix"> 
+        <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css"> 
+        <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-01addd087f.css"> 
+        <div id="content_views" class="markdown_views prism-dracula"> 
+         <svg xmlns="http://www.w3.org/2000/svg" style="display: none;"> 
+          <path stroke-linecap="round" d="M5,0 0,2.5 5,5z" id="raphael-marker-block" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path> 
+         </svg> 
+         <p>vLLM 目前支持命名函数调用，以及在聊天补全 API 的 <code>tool_choice</code > 字段中支持 <code>auto</code > 和 <code>none</code > 选项。<code>tool_choice</code > 选项中的 <code>required</code > 尚未支持，但已在计划中。</p> 
+         <h2><a id="1__1"></a>1. 快速开始</h2> 
+         <p>启动服务器并启用工具调用功能。此示例使用 Meta 的 Llama 3.1 8B 模型，因此我们需要使用 vLLM 示例目录中的 llama3 工具调用聊天模板：</p> 
+         <pre><code class="prism language-bash">vllm serve meta-llama/Llama-3.1-8B-Instruct <span class="token punctuation">\</span>
+    --enable-auto-tool-choice <span class="token punctuation">\</span>
+    --tool-call-parser llama3_json <span class="token punctuation">\</span>
+    --chat-template examples/tool_chat_template_llama3.1_json.jinja
+</code ></pre> 
+         <p>接下来，向模型发起一个请求，使其使用可用的工具：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python"><span class="token keyword">from</span> openai <span class="token keyword">import</span> OpenAI
+<span class="token keyword">import</span> json
+
+client <span class="token operator">=</span> OpenAI<span class="token punctuation">(</span>base_url<span class="token operator">=</span><span class="token string">"http://localhost:8000/v1"</span><span class="token punctuation">,</span> api_key<span class="token operator">=</span><span class="token string">"dummy"</span><span class="token punctuation">)</span>
+
+<span class="token keyword">def</span> <span class="token function">get_weather</span><span class="token punctuation">(</span>location<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span> unit<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">return</span> <span class="token string-interpolation"><span class="token string">f"Getting the weather for </span><span class="token interpolation"><span class="token punctuation">{
+              <!-- --></span>location<span class="token punctuation">}</span></span><span class="token string"> in </span><span class="token interpolation"><span class="token punctuation">{
+              <!-- --></span>unit<span class="token punctuation">}</span></span><span class="token string">..."</span></span>
+tool_functions <span class="token operator">=</span> <span class="token punctuation">{
+            <!-- --></span><span class="token string">"get_weather"</span><span class="token punctuation">:</span> get_weather<span class="token punctuation">}</span>
+
+tools <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token punctuation">{
+            <!-- --></span>
+    <span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"function"</span><span class="token punctuation">,</span>
+    <span class="token string">"function"</span><span class="token punctuation">:</span> <span class="token punctuation">{
+            <!-- --></span>
+        <span class="token string">"name"</span><span class="token punctuation">:</span> <span class="token string">"get_weather"</span><span class="token punctuation">,</span>
+        <span class="token string">"description"</span><span class="token punctuation">:</span> <span class="token string">"Get the current weather in a given location"</span><span class="token punctuation">,</span>
+        <span class="token string">"parameters"</span><span class="token punctuation">:</span> <span class="token punctuation">{
+            <!-- --></span>
+            <span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"object"</span><span class="token punctuation">,</span>
+            <span class="token string">"properties"</span><span class="token punctuation">:</span> <span class="token punctuation">{
+            <!-- --></span>
+                <span class="token string">"location"</span><span class="token punctuation">:</span> <span class="token punctuation">{
+            <!-- --></span><span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"string"</span><span class="token punctuation">,</span> <span class="token string">"description"</span><span class="token punctuation">:</span> <span class="token string">"City and state, e.g., 'San Francisco, CA'"</span><span class="token punctuation">}</span><span class="token punctuation">,</span>
+                <span class="token string">"unit"</span><span class="token punctuation">:</span> <span class="token punctuation">{
+            <!-- --></span><span class="token string">"type"</span><span class="token punctuation">:</span> <span class="token string">"string"</span><span class="token punctuation">,</span> <span class="token string">"enum"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">"celsius"</span><span class="token punctuation">,</span> <span class="token string">"fahrenheit"</span><span class="token punctuation">]</span><span class="token punctuation">}</span>
+            <span class="token punctuation">}</span><span class="token punctuation">,</span>
+            <span class="token string">"required"</span><span class="token punctuation">:</span> <span class="token punctuation">[</span><span class="token string">"location"</span><span class="token punctuation">,</span> <span class="token string">"unit"</span><span class="token punctuation">]</span>
+        <span class="token punctuation">}</span>
+    <span class="token punctuation">}</span>
+<span class="token punctuation">}</span><span class="token punctuation">]</span>
+
+response <span class="token operator">=</span> client<span class="token punctuation">.</span>chat<span class="token punctuation">.</span>completions<span class="token punctuation">.</span>create<span class="token punctuation">(</span>
+    model<span class="token operator">=</span>client<span class="token punctuation">.</span>models<span class="token punctuation">.</span><span class="token builtin">list</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>data<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span><span class="token builtin">id</span><span class="token punctuation">,</span>
+    messages<span class="token operator">=</span><span class="token punctuation">[</span><span class="token punctuation">{
+            <!-- --></span><span class="token string">"role"</span><span class="token punctuation">:</span> <span class="token string">"user"</span><span class="token punctuation">,</span> <span class="token string">"content"</span><span class="token punctuation">:</span> <span class="token string">"What's the weather like in San Francisco?"</span><span class="token punctuation">}</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+    tools<span class="token operator">=</span>tools<span class="token punctuation">,</span>
+    tool_choice<span class="token operator">=</span><span class="token string">"auto"</span>
+<span class="token punctuation">)</span>
+
+tool_call <span class="token operator">=</span> response<span class="token punctuation">.</span>choices<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>message<span class="token punctuation">.</span>tool_calls<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span><span class="token punctuation">.</span>function
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Function called: </span><span class="token interpolation"><span class="token punctuation">{
+              <!-- --></span>tool_call<span class="token punctuation">.</span>name<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Arguments: </span><span class="token interpolation"><span class="token punctuation">{
+              <!-- --></span>tool_call<span class="token punctuation">.</span>arguments<span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+<span class="token keyword">print</span><span class="token punctuation">(</span><span class="token string-interpolation"><span class="token string">f"Result: </span><span class="token interpolation"><span class="token punctuation">{
+              <!-- --></span>get_weather<span class="token punctuation">(</span><span class="token operator">**</span>json<span class="token punctuation">.</span>loads<span class="token punctuation">(</span>tool_call<span class="token punctuation">.</span>arguments<span class="token punctuation">)</span><span class="token punctuation">)</span><span class="token punctuation">}</span></span><span class="token string">"</span></span><span class="token punctuation">)</span>
+</code ></pre> 
+         <p>示例输出：</p> 
+         <pre><code class="prism language-bash">Function called: get_weather
+Arguments: <span class="token punctuation">{
+            <!-- --></span><span class="token string">"location"</span><span class="token builtin class-name">:</span> <span class="token string">"San Francisco, CA"</span>, <span class="token string">"unit"</span><span class="token builtin class-name">:</span> <span class="token string">"fahrenheit"</span><span class="token punctuation">}</span>
+Result: Getting the weather <span class="token keyword">for</span> San Francisco, CA <span class="token keyword">in</span> fahrenheit<span class="token punctuation">..</span>.
+</code ></pre> 
+         <p>这个示例演示了：</p> 
+         <ol>
+          <li>设置启用工具调用的服务器</li>
+          <li>定义一个实际的函数来处理工具调用</li>
+          <li>使用 <code>tool_choice="auto"</code > 发起请求</li>
+          <li>处理结构化响应并执行相应的函数</li>
+         </ol> 
+         <p>你也可以通过设置 <code>tool_choice={"type": "function", "function": {"name": "get_weather"}}</code > 来指定一个特定的函数。请注意，这将使用引导解码后端——所以第一次使用时，会有几秒钟的延迟（甚至更长），因为有限状态机（FSM）需要首次编译，然后缓存以供后续请求使用。</p> 
+         <p>请记住，调用者有责任：</p> 
+         <ol>
+          <li>在请求中定义适当的工具</li>
+          <li>在聊天消息中包括相关上下文</li>
+          <li>在应用程序逻辑中处理工具调用</li>
+         </ol> 
+         <p>有关更高级的用法，包括并行工具调用和不同模型特定的解析器，请参阅下面的章节。</p> 
+         <h2><a id="2__70"></a>2. 命名函数调用</h2> 
+         <p>vLLM 默认支持在聊天补全 API 中使用命名函数调用。这是通过 Outlines 的引导解码实现的，因此默认启用，并且适用于所有支持的模型。你可以确保获得一个可解析的函数调用——尽管不一定是高质量的。</p> 
+         <p>vLLM 将使用引导解码来确保响应与 <code>tools</code > 参数中定义的 JSON 模式工具参数对象匹配。为了获得最佳结果，我们建议在提示中明确指定预期的输出格式或模式，以确保模型的生成意图与引导解码后端强制生成的模式保持一致。</p> 
+         <p>要使用命名函数，你需要在聊天补全请求的 <code>tools</code > 参数中定义函数，并在 <code>tool_choice</code > 参数中指定其中一个工具的名称。</p> 
+         <h2><a id="3__76"></a>3. 自动函数调用</h2> 
+         <p>要启用此功能，你需要设置以下标志：</p> 
+         <ul>
+          <li> <p><code>--enable-auto-tool-choice</code > – <strong>必选</strong>。自动工具选择。告诉 vLLM 你希望启用模型在认为合适时自动生成工具调用。</p> </li>
+          <li> <p><code>--tool-call-parser</code > – 选择要使用的工具解析器（如下所列）。未来将继续添加更多工具解析器，你也可以通过 <code>--tool-parser-plugin</code > 注册自定义的工具解析器。</p> </li>
+          <li> <p><code>--tool-parser-plugin</code > – <strong>可选</strong>。工具解析器插件，用于将用户定义的工具解析器注册到 vLLM 中，注册的工具解析器名称可以在 <code>--tool-call-parser</code > 中指定。</p> </li>
+          <li> <p><code>--chat-template</code > – <strong>可选</strong>，用于自动工具选择。指定处理工具角色消息和包含先前生成工具调用的助手角色消息的聊天模板路径。Hermes、Mistral 和 Llama 模型的 <code>tokenizer_config.json</code > 文件中已经包含了兼容工具的聊天模板，但你可以指定自定义模板。如果你的模型在 <code>tokenizer_config.json</code > 中配置了特定于工具使用的聊天模板，可以将此参数设置为 <code>tool_use</code >。在这种情况下，将根据 transformers 规范使用该模板。更多信息可以参考 HuggingFace 的说明；你可以在 <a href="https://huggingface.co/docs/transformers/main/en/chat_templating" rel="nofollow">这里</a> 找到一个 <code>tokenizer_config.json</code > 的示例。</p> </li>
+         </ul> 
+         <p>如果你喜欢的工具调用模型尚未支持，欢迎贡献一个解析器和工具使用的聊天模板！</p> 
+         <h3><a id="31_Hermes__hermes_88"></a>3.1 Hermes 模型 (hermes)</h3> 
+         <p>所有比 Hermes 2 Pro 更新的 Nous Research Hermes 系列模型都应支持。</p> 
+         <ul>
+          <li><code>NousResearch/Hermes-2-Pro-*</code ></li>
+          <li><code>NousResearch/Hermes-2-Theta-*</code ></li>
+          <li><code>NousResearch/Hermes-3-*</code ></li>
+         </ul> 
+         <p>需要注意的是，Hermes 2 Theta 模型由于创建过程中的合并步骤，已知其工具调用质量和能力有所下降。</p> 
+         <p><strong>标志</strong>：<code>--tool-call-parser hermes</code ></p> 
+         <h3><a id="32_Mistral__mistral_98"></a>3.2 Mistral 模型 (mistral)</h3> 
+         <p>支持的模型：</p> 
+         <ul>
+          <li><code>mistralai/Mistral-7B-Instruct-v0.3</code >（已确认）</li>
+         </ul> 
+         <p>其他 Mistral 函数调用模型也兼容。</p> 
+         <p>已知问题：</p> 
+         <ul>
+          <li> <p>Mistral 7B 在生成并行工具调用时表现不佳。</p> </li>
+          <li> <p>Mistral 的 <code>tokenizer_config.json</code > 聊天模板要求工具调用 ID 必须为 9 位数字，这比 vLLM 生成的 ID 短得多。由于不满足此条件时会抛出异常，因此提供了以下额外的聊天模板：</p> 
+           <ul>
+            <li><code>examples/tool_chat_template_mistral.jinja</code > - 这是“官方”Mistral 聊天模板，但经过调整以适配 vLLM 的工具调用 ID（提供的 <code>tool_call_id</code > 字段被截断为最后 9 位数字）。</li>
+            <li><code>examples/tool_chat_template_mistral_parallel.jinja</code > - 这是一个“更好”的版本，当提供工具时，会添加一个工具使用系统提示，从而在并行工具调用时显著提高可靠性。</li>
+           </ul> </li>
+         </ul> 
+         <p>推荐标志：<br> <code>--tool-call-parser mistral --chat-template examples/tool_chat_template_mistral_parallel.jinja</code ></p> 
+         <h3><a id="33_Llama__llama3_json_115"></a>3.3 Llama 模型 (llama3_json)</h3> 
+         <p>支持的模型：</p> 
+         <ul>
+          <li><code>meta-llama/Meta-Llama-3.1-8B-Instruct</code ></li>
+          <li><code>meta-llama/Meta-Llama-3.1-70B-Instruct</code ></li>
+          <li><code>meta-llama/Meta-Llama-3.1-405B-Instruct</code ></li>
+          <li><code>meta-llama/Meta-Llama-3.1-405B-Instruct-FP8</code ></li>
+         </ul> 
+         <p>支持的工具调用是基于 JSON 的工具调用。对于 Llama-3.2 模型中的 Python 风格工具调用，请参阅下面的 Python 风格工具解析器。不支持其他工具调用格式，例如内置的 Python 工具调用或自定义工具调用。</p> 
+         <p>已知问题：</p> 
+         <ul>
+          <li>不支持并行工具调用。</li>
+          <li>模型可能会生成格式错误的参数，例如将数组序列化为字符串而不是数组。</li>
+         </ul> 
+         <p><code>tool_chat_template_llama3_json.jinja</code > 文件包含“官方”Llama 聊天模板，但经过调整以更好地适配 vLLM。</p> 
+         <p>推荐标志：<br> <code>--tool-call-parser llama3_json --chat-template examples/tool_chat_template_llama3_json.jinja</code ></p> 
+         <h3><a id="34_IBM_Granite_134"></a>3.4 IBM Granite</h3> 
+         <p>支持的模型：</p> 
+         <ol>
+          <li> <p><strong><code>ibm-granite/granite-3.0-8b-instruct</code ></strong></p> 
+           <ul>
+            <li>推荐标志：<code>--tool-call-parser granite --chat-template examples/tool_chat_template_granite.jinja</code ></li>
+            <li><code>examples/tool_chat_template_granite.jinja</code >：这是基于 Huggingface 原始模板修改的聊天模板，支持并行函数调用。</li>
+           </ul> </li>
+          <li> <p><strong><code>ibm-granite/granite-3.1-8b-instruct</code ></strong></p> 
+           <ul>
+            <li>推荐标志：<code>--tool-call-parser granite</code ></li>
+            <li>可以直接使用 Huggingface 的聊天模板，支持并行函数调用。</li>
+           </ul> </li>
+          <li> <p><strong><code>ibm-granite/granite-20b-functioncalling</code ></strong></p> 
+           <ul>
+            <li>推荐标志：<code>--tool-call-parser granite-20b-fc --chat-template examples/tool_chat_template_granite_20b_fc.jinja</code ></li>
+            <li><code>examples/tool_chat_template_granite_20b_fc.jinja</code >：这是基于 Huggingface 原始模板修改的聊天模板，原始模板不兼容 vLLM。它融合了 Hermes 模板的函数描述元素，并遵循论文中“响应生成”模式的系统提示，支持并行函数调用。</li>
+           </ul> </li>
+         </ol> 
+         <h3><a id="35_InternLM__internlm_148"></a>3.5 InternLM 模型 (internlm)</h3> 
+         <p>支持的模型：</p> 
+         <ul>
+          <li><code>internlm/internlm2_5-7b-chat</code >（已确认）</li>
+         </ul> 
+         <p>其他 <code>internlm2.5</code > 函数调用模型也兼容。</p> 
+         <p>已知问题：</p> 
+         <ul>
+          <li>尽管此实现也支持 InternLM2，但在使用 <code>internlm/internlm2-chat-7b</code > 模型测试时，工具调用结果不稳定。</li>
+         </ul> 
+         <p>推荐标志：<br> <code>--tool-call-parser internlm --chat-template examples/tool_chat_template_internlm2_tool.jinja</code ></p> 
+         <h3><a id="36_Jamba__jamba_161"></a>3.6 Jamba 模型 (jamba)</h3> 
+         <p>AI21 的 Jamba-1.5 模型已支持。</p> 
+         <ul>
+          <li><code>ai21labs/AI21-Jamba-1.5-Mini</code ></li>
+          <li><code>ai21labs/AI21-Jamba-1.5-Large</code ></li>
+         </ul> 
+         <p><strong>标志</strong>：<code>--tool-call-parser jamba</code ></p> 
+         <h3><a id="37__Python__pythonic_168"></a>3.7 支持 Python 风格工具调用的模型 (pythonic)</h3> 
+         <p>越来越多的模型使用 Python 列表来表示工具调用，而不是 JSON。这种方式的优势在于天然支持并行工具调用，并消除了工具调用所需的 JSON 模式的歧义。Python 风格工具解析器可以支持此类模型。</p> 
+         <p>作为一个具体示例，这些模型可能会通过生成以下内容来查询旧金山和西雅图的天气：</p> 
+         <pre><code class="prism language-python"><span class="token punctuation">[</span>get_weather<span class="token punctuation">(</span>city<span class="token operator">=</span><span class="token string">'San Francisco'</span><span class="token punctuation">,</span> metric<span class="token operator">=</span><span class="token string">'celsius'</span><span class="token punctuation">)</span><span class="token punctuation">,</span> get_weather<span class="token punctuation">(</span>city<span class="token operator">=</span><span class="token string">'Seattle'</span><span class="token punctuation">,</span> metric<span class="token operator">=</span><span class="token string">'celsius'</span><span class="token punctuation">)</span><span class="token punctuation">]</span>
+</code ></pre> 
+         <p><strong>限制</strong>：</p> 
+         <ul>
+          <li>模型不能在同一生成过程中同时生成文本和工具调用。对于特定模型来说，这可能不难修改，但社区目前对于开始和结束工具调用时应发出哪些标记尚未达成共识。（特别是 Llama 3.2 模型不会发出此类标记。）</li>
+          <li>Llama 的小模型在使用工具时表现不佳。</li>
+         </ul> 
+         <p><strong>示例支持的模型</strong>：</p> 
+         <ul>
+          <li><code>meta-llama/Llama-3.2-1B-Instruct*</code >（使用 <code>examples/tool_chat_template_llama3.2_pythonic.jinja</code >）</li>
+          <li><code>meta-llama/Llama-3.2-3B-Instruct*</code >（使用 <code>examples/tool_chat_template_llama3.2_pythonic.jinja</code >）</li>
+          <li><code>Team-ACE/ToolACE-8B</code >（使用 <code>examples/tool_chat_template_toolace.jinja</code >）</li>
+          <li><code>fixie-ai/ultravox-v0_4-ToolACE-8B</code >（使用 <code>examples/tool_chat_template_toolace.jinja</code >）</li>
+         </ul> 
+         <p><strong>标志</strong>：<br> <code>--tool-call-parser pythonic --chat-template {见上文}</code ></p> 
+         <p><strong>警告</strong>：Llama 的小模型经常无法以正确格式发出工具调用。实际效果可能因模型而异。</p> 
+         <h2><a id="4__193"></a>4. 如何编写工具解析器插件</h2> 
+         <p>工具解析器插件是一个包含一个或多个 <code>ToolParser</code > 实现的 Python 文件。你可以参考 <code>vllm/entrypoints/openai/tool_parsers/hermes_tool_parser.py</code > 中的 <code>Hermes2ProToolParser</code > 来编写 <code>ToolParser</code >。</p> 
+         <p>以下是插件文件的概要：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python">
+<span class="token comment"># import the required packages</span>
+
+<span class="token comment"># define a tool parser and register it to vllm</span>
+<span class="token comment"># the name list in register_module can be used</span>
+<span class="token comment"># in --tool-call-parser. you can define as many</span>
+<span class="token comment"># tool parsers as you want here.</span>
+<span class="token decorator annotation punctuation">@ToolParserManager<span class="token punctuation">.</span>register_module</span><span class="token punctuation">(</span><span class="token punctuation">[</span><span class="token string">"example"</span><span class="token punctuation">]</span><span class="token punctuation">)</span>
+<span class="token keyword">class</span> <span class="token class-name">ExampleToolParser</span><span class="token punctuation">(</span>ToolParser<span class="token punctuation">)</span><span class="token punctuation">:</span>
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> tokenizer<span class="token punctuation">:</span> AnyTokenizer<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token builtin">super</span><span class="token punctuation">(</span><span class="token punctuation">)</span><span class="token punctuation">.</span>__init__<span class="token punctuation">(</span>tokenizer<span class="token punctuation">)</span>
+
+    <span class="token comment"># adjust request. e.g.: set skip special tokens</span>
+    <span class="token comment"># to False for tool call output.</span>
+    <span class="token keyword">def</span> <span class="token function">adjust_request</span><span class="token punctuation">(</span>
+            self<span class="token punctuation">,</span> request<span class="token punctuation">:</span> ChatCompletionRequest<span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&gt;</span> ChatCompletionRequest<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> request
+
+    <span class="token comment"># implement the tool call parse for stream call</span>
+    <span class="token keyword">def</span> <span class="token function">extract_tool_calls_streaming</span><span class="token punctuation">(</span>
+        self<span class="token punctuation">,</span>
+        previous_text<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span>
+        current_text<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span>
+        delta_text<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span>
+        previous_token_ids<span class="token punctuation">:</span> Sequence<span class="token punctuation">[</span><span class="token builtin">int</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        current_token_ids<span class="token punctuation">:</span> Sequence<span class="token punctuation">[</span><span class="token builtin">int</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        delta_token_ids<span class="token punctuation">:</span> Sequence<span class="token punctuation">[</span><span class="token builtin">int</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        request<span class="token punctuation">:</span> ChatCompletionRequest<span class="token punctuation">,</span>
+    <span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&gt;</span> Union<span class="token punctuation">[</span>DeltaMessage<span class="token punctuation">,</span> <span class="token boolean">None</span><span class="token punctuation">]</span><span class="token punctuation">:</span>
+        <span class="token keyword">return</span> delta
+
+    <span class="token comment"># implement the tool parse for non-stream call</span>
+    <span class="token keyword">def</span> <span class="token function">extract_tool_calls</span><span class="token punctuation">(</span>
+        self<span class="token punctuation">,</span>
+        model_output<span class="token punctuation">:</span> <span class="token builtin">str</span><span class="token punctuation">,</span>
+        request<span class="token punctuation">:</span> ChatCompletionRequest<span class="token punctuation">,</span>
+    <span class="token punctuation">)</span> <span class="token operator">-</span><span class="token operator">&gt;</span> ExtractedToolCallInformation<span class="token punctuation">:</span>
+        <span class="token keyword">return</span> ExtractedToolCallInformation<span class="token punctuation">(</span>tools_called<span class="token operator">=</span><span class="token boolean">False</span><span class="token punctuation">,</span>
+                                            tool_calls<span class="token operator">=</span><span class="token punctuation">[</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+                                            content<span class="token operator">=</span>text<span class="token punctuation">)</span>
+
+</code ></pre> 
+         <p>然后，你可以在命令行中像这样使用此插件：</p> 
+         <pre><code class="prism language-bash">    --enable-auto-tool-choice <span class="token punctuation">\</span>
+    --tool-parser-plugin <span class="token operator">&lt;</span>absolute path of the plugin file<span class="token operator">&gt;</span>
+    --tool-call-parser example <span class="token punctuation">\</span>
+    --chat-template <span class="token operator">&lt;</span>your chat template<span class="token operator">&gt;</span> <span class="token punctuation">\</span>
+    ```
+    
+</code ></pre> 
+        </div> 
+        <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/markdown_views-ecfda744a4.css" rel="stylesheet"> 
+        <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/style-e504d6a974.css" rel="stylesheet"> 
+       </div> 
+       <div id="blogExtensionBox" style="margin-top:12px" class="blog-extension-box"></div> 
+      </article>  
+     </div> 
+     <div class="directory-boxshadow-dialog" style="display:none;"> 
+      <div class="directory-boxshadow-dialog-box"> 
+      </div> 
+      <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new"> 
+       <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"> 
+       <div class="vip-limited-time-top">
+         确定要放弃本次机会？ 
+       </div> 
+       <span class="vip-limited-time-text">福利倒计时</span> 
+       <div class="limited-time-box-new"> 
+        <span class="time-hour"></span> 
+        <i>:</i> 
+        <span class="time-minite"></span> 
+        <i>:</i> 
+        <span class="time-second"></span> 
+       </div> 
+       <div class="limited-time-vip-box"> 
+        <p> <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"> <span class="def">立减 ¥</span> <span class="active limited-num"></span> </p> 
+        <span class="">普通VIP年卡可用</span> 
+       </div> 
+       <a class="limited-time-btn-new" href="https://mall.csdn.net/vip" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.9621&quot;}" data-report-query="spm=1001.2101.3001.9621">立即使用</a> 
+      </div> 
+     </div> 
+     <div class="more-toolbox-new more-toolbar" id="toolBarBox"> 
+      <div class="left-toolbox"> 
+       <div class="toolbox-left"> 
+        <div class="profile-box"> 
+         <a class="profile-href" target="_blank" href="https://blog.csdn.net/qq_39698985"><img class="profile-img" src="https://i-avatar.csdnimg.cn/ab62205193b84b71b0ffc27cb2042a93_qq_39698985.jpg!1"> <span class="profile-name"> AI专题精讲 </span> </a> 
+        </div> 
+        <div class="profile-attend"> 
+         <a class="tool-attend tool-bt-button tool-unbt-attend" href="javascript:;" data-report-view="{&quot;mod&quot;:&quot;1592215036_002&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4232&quot;,&quot;extend1&quot;:&quot;已关注&quot;}">已关注</a> 
+         <a class="tool-item-follow active-animation" style="display:none;">关注</a> 
+        </div> 
+       </div> 
+       <div class="toolbox-middle"> 
+        <ul class="toolbox-list"> 
+         <li class="tool-item tool-item-size tool-active is-like" id="is-like" data-type="bottom"> <a class="tool-item-href"> <img style="display:none;" id="is-like-imgactive-animation-like" class="animation-dom active-animation" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarThumbUpactive.png" alt=""> <img class="isactive" style="display:none" id="is-like-imgactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/like-active.png" alt=""> <img class="isdefault" style="display:block" id="is-like-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/like.png" alt=""> <span id="spanCount" class="count "> 0 </span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">点赞</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active is-unlike" id="is-unlike"> <a class="tool-item-href"> <img class="isactive" style="margin-right:0px;display:none" id="is-unlike-imgactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/unlike-active.png" alt=""> <img class="isdefault" style="margin-right:0px;display:block" id="is-unlike-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/unlike.png" alt=""> <span id="unlikeCount" class="count "></span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">踩</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active is-collection "> <a class="tool-item-href" href="javascript:;" data-report-click="{&quot;mod&quot;:&quot;popu_824&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4130&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img style="display:none" id="is-collection-img-collection" class="animation-dom active-animation" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/collect-active.png" alt=""> <img class="isdefault" id="is-collection-img" style="display:block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/collect.png" alt=""> <img class="isactive" id="is-collection-imgactive" style="display:none" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newCollectActive.png" alt=""> <span class="count get-collection " data-num="0" id="get-collection"> 0 </span> </a> 
+          <div class="tool-hover-tip collect"> 
+           <div class="collect-operate-box"> 
+            <span class="collect-text" id="is-collection"> 收藏 </span> 
+           </div> 
+          </div> 
+          <div class="tool-active-list"> 
+           <div class="text">
+             觉得还不错? 
+            <span class="collect-text" id="tool-active-list-collection"> 一键收藏 </span> 
+            <img id="tool-active-list-close" src="https://csdnimg.cn/release/blogv2/dist/pc/img/collectionCloseWhite.png" alt=""> 
+           </div> 
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active tool-item-comment"> 
+          <div class="guide-rr-first"> 
+           <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/guideRedReward01.png" alt=""> 
+           <button class="btn-guide-known">知道了</button> 
+          </div> <a class="tool-item-href go-side-comment" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.7009&quot;}"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/comment.png" alt=""> <span class="count"> 0 </span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">评论</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active tool-QRcode" data-type="article" id="tool-share"> <a class="tool-item-href" href="javascript:;" data-report-view="{&quot;spm&quot;:&quot;3001.4129&quot;,&quot;extra&quot;:{&quot;type&quot;:&quot;blogdetail&quot;}}"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/share.png" alt=""> <span class="count">分享</span> </a> 
+          <div class="QRcode" id="tool-QRcode"> 
+           <div class="share-bg-box"> 
+            <div class="share-content"> 
+             <a id="copyPosterUrl" data-type="link" class="btn-share">复制链接</a> 
+            </div> 
+            <div class="share-content"> 
+             <a class="btn-share" data-type="qq">分享到 QQ</a> 
+            </div> 
+            <div class="share-content"> 
+             <a class="btn-share" data-type="weibo">分享到新浪微博</a> 
+            </div> 
+            <div class="share-code"> 
+             <div class="share-code-box" id="shareCode"></div> 
+             <div class="share-code-text"> 
+              <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/share/icon-wechat.png" alt="">扫一扫 
+             </div> 
+            </div> 
+           </div> 
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active tool-item-reward"> <a class="tool-item-href" href="javascript:;" data-report-click="{&quot;mod&quot;:&quot;popu_830&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4237&quot;,&quot;dest&quot;:&quot;&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img class="isdefault reward-bt" id="rewardBtNew" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/reward.png" alt="打赏"> <span class="count">打赏</span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">打赏</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active is-more" id="is-more"> <a class="tool-item-href"> <img class="isdefault" style="margin-right:0px;display:block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/more.png" alt=""> <span class="count"></span> </a> 
+          <div class="more-opt-box"> 
+           <div class="mini-box"> 
+            <a class="tool-item-href" id="rewardBtNewHide" data-report-click="{&quot;spm&quot;:&quot;3001.4237&quot;,&quot;extra&quot;:&quot;{\&quot;type\&quot;:\&quot;hide\&quot;}&quot;}"> <img class="isdefault reward-bt" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/reward.png" alt="打赏"> <span class="count">打赏</span> </a> 
+            <a class="tool-item-href" id="toolReportBtnHide"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/report.png" alt=""> <span class="count">举报</span> </a> 
+           </div> 
+           <div class="normal-box"> 
+            <a class="tool-item-href" id="toolReportBtnHideNormal"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/report.png" alt=""> <span class="count">举报</span> </a> 
+           </div> 
+          </div> </li> 
+        </ul> 
+       </div> 
+       <div class="toolbox-right"> 
+        <div class="tool-directory"> 
+         <a class="bt-columnlist-show" data-id="12112329" data-free="false" data-description="自然语言处理" data-subscribe="true" data-title="大模型专题系列" data-img="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_224,w_224" data-url="https://blog.csdn.net/qq_39698985/category_12112329.html" data-sum="111" data-people="16" data-price="49.90" data-hotrank="0" data-status="true" data-oldprice="99.00" data-join="true" data-studyvip="true" data-studysubscribe="true" data-report-view="{&quot;spm&quot;:&quot;1001.2101.3001.6334&quot;,&quot;extend1&quot;:&quot;专栏目录&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.6334&quot;,&quot;extend1&quot;:&quot;专栏目录&quot;}">专栏目录</a> 
+        </div> 
+        <div class="tool-column"> 
+         <a class="tool-bt-button tool-unbt-subscribe" href="javascript:;" data-report-view="{&quot;mod&quot;:&quot;1592215036_001&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4405&quot;,&quot;extend1&quot;:&quot;已订阅&quot;}" data-report-click="{&quot;mod&quot;:&quot;1592215036_001&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4405&quot;,&quot;extend1&quot;:&quot;已订阅&quot;}">已订阅</a> 
+        </div> 
+       </div> 
+      </div> 
+     </div>    
+     <a id="commentBox" name="commentBox"></a> 
+    </main> 
+   </div> 
+   <div class="recommend-right1  align-items-stretch clearfix" id="rightAsideConcision" data-type="recommend"> 
+    <aside class="recommend-right_aside"> 
+     <div id="recommend-right-concision"> 
+      <div class="flex-column aside-box groupfile" id="groupfileConcision"> 
+       <div class="groupfile-div1"> 
+        <h3 class="aside-title">目录</h3> 
+        <div class="align-items-stretch group_item"> 
+         <div class="pos-box"> 
+          <div class="scroll-box"> 
+           <div class="toc-box"></div> 
+          </div> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+    </aside> 
+   </div> 
+  </div> 
+  <div class="mask-dark"></div> 
+  <div class="skin-boxshadow"></div> 
+  <div class="directory-boxshadow"></div> 
+  <div style="display:none;"> 
+   <img src="" onerror="setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){var test=&quot;\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74&quot;}},3000);"> 
+  </div> 
+  <div class="keyword-dec-box" id="keywordDecBox"></div> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css">        
+  <link rel="stylesheet" href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css"> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-dark.css">                  
+ </body>
+</html>

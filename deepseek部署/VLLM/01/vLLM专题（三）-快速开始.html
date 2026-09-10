@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="zh-CN">
+ <head> 
+  <meta charset="utf-8"> 
+  <link rel="canonical" href="https://blog.csdn.net/qq_39698985/article/details/145667159"> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+  <meta name="renderer" content="webkit"> 
+  <meta name="force-rendering" content="webkit"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+  <meta name="report" content="{&quot;pid&quot;: &quot;blog&quot;, &quot;spm&quot;:&quot;1001.2101&quot;}"> 
+  <meta name="referrer" content="always"> 
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+  <link rel="alternate" media="handheld" href="#">  
+  <meta name="applicable-device" content="pc"> 
+  <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"> 
+  <title>vLLM专题（三）-快速开始_uv vllm-CSDN博客</title>   
+  <meta name="keywords" content="uv vllm"> 
+  <meta name="csdn-baidu-search" content="{&quot;autorun&quot;:true,&quot;install&quot;:true,&quot;keyword&quot;:&quot;uv vllm&quot;}"> 
+  <meta name="description" content="文章浏览阅读219次。这使得 vLLM 可以作为 OpenAI API 的替代品，供使用 OpenAI API 的应用程序使用。建议使用 uv，一个非常快速的 Python 环境管理器，来创建和管理 Python 环境。聊天界面是一种更动态、互动的与模型沟通的方式，允许进行往返交流，并可以将对话历史存储。由于该服务器与 OpenAI API 兼容，您可以将其作为任何使用 OpenAI API 的应用程序的替代品。支持的模型列表可以在此处找到。如果您使用的是 NVIDIA GPU，您可以直接使用 pip 安装 vLLM。_uv vllm"> 
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-98c4414736.min.css"> 
+  <style>
+        #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+    </style>  
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin-yellow/skin-yellow-28d34ab5fa.min.css">    
+  <meta name="toolbar" content="{&quot;type&quot;:&quot;0&quot;,&quot;fixModel&quot;:&quot;1&quot;}">    
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css"> 
+  <style>
+        .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+    </style>      
+ 	<style>
+	main div.blog-content-box pre {
+		max-height: 100%;
+		overflow-y: hidden;
+	}
+	</style>
+ </head>  
+ <body class="nodata  " style=""> 
+  <div id="toolbarBox" style="min-height: 48px;"></div>    
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css"> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css"> 
+  <link rel="stylesheet" href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css">   
+  <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;"> 
+   <div class="container clearfix container-concision" id="mainBox">  
+    <main>  
+     <div class="blog-content-box"> 
+      <div class="article-header-box"> 
+       <div class="article-header"> 
+        <div class="article-title-box"> 
+         <h1 class="title-article" id="articleContentId">vLLM专题（三）-快速开始</h1> 
+        </div> 
+        <div class="article-info-box"> 
+         <div class="article-bar-top"> 
+          <img class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png" alt=""> 
+          <div class="bar-content"> 
+           <a class="follow-nickName " href="https://blog.csdn.net/qq_39698985" target="_blank" rel="noopener" title="AI专题精讲">AI专题精讲</a> 
+           <img class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png" alt=""> 
+           <span class="time">已于&nbsp;2025-03-19 11:31:21&nbsp;修改</span> 
+           <div class="read-count-box"> 
+            <img class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png" alt=""> 
+            <span class="read-count">阅读量219</span> 
+            <a id="blog_detail_zk_collection" class="un-collection" data-report-click="{&quot;mod&quot;:&quot;popu_823&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4232&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img class="article-collect-img article-heard-img un-collect-status isdefault" style="display:inline-block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" alt=""> <img class="article-collect-img article-heard-img collect-status isactive" style="display:none" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" alt=""> <span class="name">收藏</span> <span class="get-collection"> </span> </a> 
+            <div class="read-count-box is-like" data-type="top"> 
+             <img class="article-read-img article-heard-img" style="display:none" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" alt=""> 
+             <img class="article-read-img article-heard-img" style="display:block" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" alt=""> 
+             <span class="read-count" id="blog-digg-num">点赞数 </span> 
+            </div> 
+           </div> 
+          </div> 
+         </div> 
+         <div class="blog-tags-box"> 
+          <div class="tags-box artic-tag-box"> 
+           <span class="label">分类专栏：</span> 
+           <a class="tag-link" href="https://blog.csdn.net/qq_39698985/category_12112329.html" target="_blank" rel="noopener">大模型专题系列</a> 
+           <span class="label">文章标签：</span> 
+           <a rel="noopener" data-report-query="spm=1001.2101.3001.4223" data-report-click="{&quot;mod&quot;:&quot;popu_626&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4223&quot;,&quot;strategy&quot;:&quot;人工智能&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;extra&quot;:&quot;{\&quot;searchword\&quot;:\&quot;人工智能\&quot;}&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_626&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4223&quot;,&quot;strategy&quot;:&quot;人工智能&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;extra&quot;:&quot;{\&quot;searchword\&quot;:\&quot;人工智能\&quot;}&quot;}" class="tag-link" href="https://so.csdn.net/so/search/s.do?q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" target="_blank">人工智能</a> 
+          </div> 
+         </div> 
+         <div class="up-time">
+          <span>于&nbsp;2025-02-16 21:25:40&nbsp;首次发布</span>
+         </div> 
+         <div class="slide-content-box"> 
+          <div class="article-copyright"> 
+           <div class="creativecommons">
+             版权声明：本文为博主原创文章，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>版权协议，转载请附上原文出处链接和本声明。 
+           </div> 
+           <div class="article-source-link">
+             本文链接：
+            <a href="https://blog.csdn.net/qq_39698985/article/details/145667159" target="_blank">https://blog.csdn.net/qq_39698985/article/details/145667159</a> 
+           </div> 
+          </div> 
+         </div> 
+         <div class="operating"> 
+          <a class="href-article-edit slide-toggle">版权</a> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+      <div id="blogHuaweiyunAdvert" class=""></div> 
+      <div id="blogColumnPayAdvert" class=""> 
+       <div class="column-group"> 
+        <div class="column-group-item column-group0 column-group-item-one"> 
+         <div class="item-l"> 
+          <a class="item-target" href="https://blog.csdn.net/qq_39698985/category_12112329.html" target="_blank" title="大模型专题系列" data-report-view="{&quot;spm&quot;:&quot;1001.2101.3001.6332&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.6332&quot;}"> <img class="item-target" src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_224,w_224" alt=""> <span class="title item-target"> <span> <span class="tit">大模型专题系列</span> <span class="dec">专栏收录该内容</span> </span> </span> </a> 
+         </div> 
+         <div class="item-m"> 
+          <span>111 篇文章</span> 
+          <span class="old-add-new-box"> <span class="price">¥49.90</span> <span class="oldprice">¥99.00</span> </span> 
+         </div> 
+         <div class="item-r"> 
+          <a class="item-target article-column-subscribe">已订阅 </a> 
+          <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-view="{&quot;spm&quot;:&quot;1001.2015.3001.8590&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2015.3001.8590&quot;}">8折续费 </a> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="learning_the_member_box"> 
+       <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank"> 
+        <div class="left">
+         <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png" alt="">
+         <span>您已是超级会员，正在免费阅读会员专享内容</span>
+        </div> 
+        <div class="right">
+         <span>查看更多超级会员权益</span>
+         <img src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png" alt="">
+        </div> </a> 
+      </div> 
+      <article class="baidu_pl"> 
+       <div id="article_content" class="article_content clearfix"> 
+        <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css"> 
+        <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css"> 
+        <div id="content_views" class="markdown_views prism-dracula"> 
+         <svg xmlns="http://www.w3.org/2000/svg" style="display: none;"> 
+          <path stroke-linecap="round" d="M5,0 0,2.5 5,5z" id="raphael-marker-block" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path> 
+         </svg> 
+         <p>本指南将帮助您快速开始使用 vLLM 执行：</p> 
+         <ul>
+          <li>离线批量推理</li>
+          <li>使用 OpenAI 兼容服务器进行在线服务</li>
+         </ul> 
+         <h2><a id="1__3"></a>1. 先决条件</h2> 
+         <p>操作系统：Linux</p> 
+         <p>Python：3.9 – 3.12</p> 
+         <h2><a id="2__7"></a>2. 安装</h2> 
+         <p>如果您使用的是 NVIDIA GPU，您可以直接使用 pip 安装 vLLM。</p> 
+         <p>建议使用 uv，一个非常快速的 Python 环境管理器，来创建和管理 Python 环境。请按照文档安装 uv。安装 uv 后，您可以创建一个新的 Python 环境，并使用以下命令安装 vLLM：</p> 
+         <pre><code class="prism language-bash">uv venv myenv <span class="token parameter variable">--python</span> <span class="token number">3.12</span> <span class="token parameter variable">--seed</span>
+<span class="token builtin class-name">source</span> myenv/bin/activate
+uv pip <span class="token function">install</span> vllm
+</code ></pre> 
+         <p>您也可以使用 conda 来创建和管理 Python 环境。</p> 
+         <pre><code class="prism language-bash">conda create <span class="token parameter variable">-n</span> myenv <span class="token assign-left variable">python</span><span class="token operator">=</span><span class="token number">3.12</span> <span class="token parameter variable">-y</span>
+conda activate myenv
+pip <span class="token function">install</span> vllm
+</code ></pre> 
+         <blockquote> 
+          <p><strong>注意</strong><br> 对于非 CUDA 平台，请参考此处的具体说明以了解如何安装 vLLM。</p> 
+         </blockquote> 
+         <h2><a id="3__25"></a>3. 离线批量推理</h2> 
+         <p>安装 vLLM 后，您可以开始为一组输入提示生成文本（即离线批量推理）。请参见示例脚本：examples/offline_inference/basic.py</p> 
+         <p>此示例的第一行导入了 LLM 和 SamplingParams 类：</p> 
+         <ul>
+          <li>LLM 是用于通过 vLLM 引擎运行离线推理的主要类。</li>
+          <li>SamplingParams 指定了采样过程的参数。</li>
+         </ul> 
+         <pre><code class="prism language-bash">from vllm <span class="token function">import</span> LLM, SamplingParams
+</code ></pre> 
+         <p>下一部分定义了一组输入提示和用于文本生成的采样参数。采样温度设置为 0.8，核采样概率设置为 0.95。您可以在此处找到有关采样参数的更多信息。</p> 
+         <pre><code class="prism language-bash">prompts <span class="token operator">=</span> <span class="token punctuation">[</span>
+    <span class="token string">"Hello, my name is"</span>,
+    <span class="token string">"The president of the United States is"</span>,
+    <span class="token string">"The capital of France is"</span>,
+    <span class="token string">"The future of AI is"</span>,
+<span class="token punctuation">]</span>
+sampling_params <span class="token operator">=</span> SamplingParams<span class="token punctuation">(</span>temperature<span class="token operator">=</span><span class="token number">0.8</span>, <span class="token assign-left variable">top_p</span><span class="token operator">=</span><span class="token number">0.95</span><span class="token punctuation">)</span>
+</code ></pre> 
+         <p>LLM 类初始化 vLLM 引擎和 OPT-125M 模型用于离线推理。支持的模型列表可以在此处找到。</p> 
+         <pre><code class="prism language-bash">llm <span class="token operator">=</span> LLM<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"facebook/opt-125m"</span><span class="token punctuation">)</span>
+</code ></pre> 
+         <blockquote> 
+          <p><strong>注意</strong><br> 默认情况下，vLLM 从 HuggingFace 下载模型。如果您希望使用来自 ModelScope 的模型，请在初始化引擎之前设置环境变量 <code>VLLM_USE_MODELSCOPE</code >。</p> 
+         </blockquote> 
+         <p>现在，进入有趣的部分！输出是通过 <code>llm.generate</code > 生成的。它将输入提示添加到 vLLM 引擎的等待队列，并执行 vLLM 引擎以高吞吐量生成输出。输出作为 <code>RequestOutput</code > 对象的列表返回，其中包含所有输出的标记。</p> 
+         <pre><code class="prism language-bash">outputs <span class="token operator">=</span> llm.generate<span class="token punctuation">(</span>prompts, sampling_params<span class="token punctuation">)</span>
+
+<span class="token keyword">for</span> <span class="token for-or-select variable">output</span> <span class="token keyword">in</span> outputs:
+    prompt <span class="token operator">=</span> output.prompt
+    generated_text <span class="token operator">=</span> output.outputs<span class="token punctuation">[</span><span class="token number">0</span><span class="token punctuation">]</span>.text
+    print<span class="token punctuation">(</span>f<span class="token string">"Prompt: {prompt!r}, Generated text: {generated_text!r}"</span><span class="token punctuation">)</span>
+</code ></pre> 
+         <h2><a id="4_OpenAI__61"></a>4. OpenAI 兼容服务器</h2> 
+         <p>vLLM 可以作为实现 OpenAI API 协议的服务器进行部署。这使得 vLLM 可以作为 OpenAI API 的替代品，供使用 OpenAI API 的应用程序使用。默认情况下，它在 http://localhost:8000 启动服务器。您可以使用 <code>--host</code > 和 <code>--port</code > 参数指定地址。当前，服务器一次只能托管一个模型，并实现了诸如列出模型、创建聊天完成和创建完成等端点。</p> 
+         <p>运行以下命令以启动 vLLM 服务器，并使用 Qwen2.5-1.5B-Instruct 模型：</p> 
+         <pre><code class="prism language-bash">vllm serve Qwen/Qwen2.5-1.5B-Instruct
+</code ></pre> 
+         <blockquote> 
+          <p><strong>注意</strong><br> 默认情况下，服务器使用存储在分词器中的预定义聊天模板。您可以在这里了解如何覆盖它。</p> 
+         </blockquote> 
+         <p>该服务器可以使用与 OpenAI API 相同的格式进行查询。例如，要列出模型：</p> 
+         <pre><code class="prism language-bash"><span class="token function">curl</span> http://localhost:8000/v1/models
+</code ></pre> 
+         <p>您可以传入参数 <code>--api-key</code > 或环境变量 <code>VLLM_API_KEY</code >，以启用服务器在请求头中检查 API 密钥。</p> 
+         <h3><a id="41__vLLM__OpenAI__API_76"></a>4.1 使用 vLLM 的 OpenAI 完成 API</h3> 
+         <p>一旦服务器启动，您可以使用输入提示查询模型：</p> 
+         <pre><code class="prism language-bash"><span class="token function">curl</span> http://localhost:8000/v1/completions <span class="token punctuation">\</span>
+    <span class="token parameter variable">-H</span> <span class="token string">"Content-Type: application/json"</span> <span class="token punctuation">\</span>
+    <span class="token parameter variable">-d</span> <span class="token string">'{
+        "model": "Qwen/Qwen2.5-1.5B-Instruct",
+        "prompt": "San Francisco is a",
+        "max_tokens": 7,
+        "temperature": 0
+    }'</span>
+</code ></pre> 
+         <p>由于该服务器与 OpenAI API 兼容，您可以将其作为任何使用 OpenAI API 的应用程序的替代品。例如，查询服务器的另一种方式是通过 openai Python 包：</p> 
+         <pre><code class="prism language-bash">from openai <span class="token function">import</span> OpenAI
+
+<span class="token comment"># Modify OpenAI's API key and API base to use vLLM's API server.</span>
+openai_api_key <span class="token operator">=</span> <span class="token string">"EMPTY"</span>
+openai_api_base <span class="token operator">=</span> <span class="token string">"http://localhost:8000/v1"</span>
+client <span class="token operator">=</span> OpenAI<span class="token punctuation">(</span>
+    <span class="token assign-left variable">api_key</span><span class="token operator">=</span>openai_api_key,
+    <span class="token assign-left variable">base_url</span><span class="token operator">=</span>openai_api_base,
+<span class="token punctuation">)</span>
+completion <span class="token operator">=</span> client.completions.create<span class="token punctuation">(</span>model<span class="token operator">=</span><span class="token string">"Qwen/Qwen2.5-1.5B-Instruct"</span>,
+                                      <span class="token assign-left variable">prompt</span><span class="token operator">=</span><span class="token string">"San Francisco is a"</span><span class="token punctuation">)</span>
+print<span class="token punctuation">(</span><span class="token string">"Completion result:"</span>, completion<span class="token punctuation">)</span>
+</code ></pre> 
+         <p>更详细的客户端示例可以在这里找到：examples/online_serving/openai_completion_client.py</p> 
+         <h3><a id="42__vLLM__OpenAI__API_104"></a>4.2 使用 vLLM 的 OpenAI 聊天完成 API</h3> 
+         <p>vLLM 还支持 OpenAI 聊天完成 API。聊天界面是一种更动态、互动的与模型沟通的方式，允许进行往返交流，并可以将对话历史存储。这对于需要上下文或更详细解释的任务非常有用。</p> 
+         <p>您可以使用创建聊天完成端点与模型进行交互：</p> 
+         <pre><code class="prism language-bash"><span class="token function">curl</span> http://localhost:8000/v1/chat/completions <span class="token punctuation">\</span>
+    <span class="token parameter variable">-H</span> <span class="token string">"Content-Type: application/json"</span> <span class="token punctuation">\</span>
+    <span class="token parameter variable">-d</span> <span class="token string">'{
+        "model": "Qwen/Qwen2.5-1.5B-Instruct",
+        "messages": [
+            {"role": "system", "content": "You are a helpful assistant."},
+            {"role": "user", "content": "Who won the world series in 2020?"}
+        ]
+    }'</span>
+</code ></pre> 
+         <p>另外，您也可以使用 openai Python 包：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-bash">   from openai <span class="token function">import</span> OpenAI
+<span class="token comment"># Set OpenAI's API key and API base to use vLLM's API server.</span>
+openai_api_key <span class="token operator">=</span> <span class="token string">"EMPTY"</span>
+openai_api_base <span class="token operator">=</span> <span class="token string">"http://localhost:8000/v1"</span>
+
+client <span class="token operator">=</span> OpenAI<span class="token punctuation">(</span>
+ <span class="token assign-left variable">api_key</span><span class="token operator">=</span>openai_api_key,
+ <span class="token assign-left variable">base_url</span><span class="token operator">=</span>openai_api_base,
+<span class="token punctuation">)</span>
+
+chat_response <span class="token operator">=</span> client.chat.completions.create<span class="token punctuation">(</span>
+ <span class="token assign-left variable">model</span><span class="token operator">=</span><span class="token string">"Qwen/Qwen2.5-1.5B-Instruct"</span>,
+ <span class="token assign-left variable">messages</span><span class="token operator">=</span><span class="token punctuation">[</span>
+     <span class="token punctuation">{
+            <!-- --></span><span class="token string">"role"</span><span class="token builtin class-name">:</span> <span class="token string">"system"</span>, <span class="token string">"content"</span><span class="token builtin class-name">:</span> <span class="token string">"You are a helpful assistant."</span><span class="token punctuation">}</span>,
+     <span class="token punctuation">{
+            <!-- --></span><span class="token string">"role"</span><span class="token builtin class-name">:</span> <span class="token string">"user"</span>, <span class="token string">"content"</span><span class="token builtin class-name">:</span> <span class="token string">"Tell me a joke."</span><span class="token punctuation">}</span>,
+ <span class="token punctuation">]</span>
+<span class="token punctuation">)</span>
+print<span class="token punctuation">(</span><span class="token string">"Chat response:"</span>, chat_response<span class="token punctuation">)</span>
+</code ></pre> 
+        </div> 
+        <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/markdown_views-a5d25dd831.css" rel="stylesheet"> 
+        <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/style-e504d6a974.css" rel="stylesheet"> 
+       </div> 
+       <div id="blogExtensionBox" style="margin-top:12px" class="blog-extension-box"></div> 
+      </article>  
+     </div> 
+     <div class="directory-boxshadow-dialog" style="display:none;"> 
+      <div class="directory-boxshadow-dialog-box"> 
+      </div> 
+      <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new"> 
+       <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"> 
+       <div class="vip-limited-time-top">
+         确定要放弃本次机会？ 
+       </div> 
+       <span class="vip-limited-time-text">福利倒计时</span> 
+       <div class="limited-time-box-new"> 
+        <span class="time-hour"></span> 
+        <i>:</i> 
+        <span class="time-minite"></span> 
+        <i>:</i> 
+        <span class="time-second"></span> 
+       </div> 
+       <div class="limited-time-vip-box"> 
+        <p> <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"> <span class="def">立减 ¥</span> <span class="active limited-num"></span> </p> 
+        <span class="">普通VIP年卡可用</span> 
+       </div> 
+       <a class="limited-time-btn-new" href="https://mall.csdn.net/vip" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.9621&quot;}" data-report-query="spm=1001.2101.3001.9621">立即使用</a> 
+      </div> 
+     </div> 
+     <div class="more-toolbox-new more-toolbar" id="toolBarBox"> 
+      <div class="left-toolbox"> 
+       <div class="toolbox-left"> 
+        <div class="profile-box"> 
+         <a class="profile-href" target="_blank" href="https://blog.csdn.net/qq_39698985"><img class="profile-img" src="https://i-avatar.csdnimg.cn/ab62205193b84b71b0ffc27cb2042a93_qq_39698985.jpg!1"> <span class="profile-name"> AI专题精讲 </span> </a> 
+        </div> 
+        <div class="profile-attend"> 
+         <a class="tool-attend tool-bt-button tool-bt-attend" href="javascript:;" data-report-view="{&quot;mod&quot;:&quot;1592215036_002&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4232&quot;,&quot;extend1&quot;:&quot;已关注&quot;}">已关注</a> 
+         <a class="tool-item-follow active-animation" style="display:none;">已关注</a> 
+        </div> 
+       </div> 
+       <div class="toolbox-middle"> 
+        <ul class="toolbox-list"> 
+         <li class="tool-item tool-item-size tool-active is-like" id="is-like" data-type="bottom"> <a class="tool-item-href"> <img style="display:none;" id="is-like-imgactive-animation-like" class="animation-dom active-animation" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarThumbUpactive.png" alt=""> <img class="isactive" style="display:none" id="is-like-imgactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/like-active.png" alt=""> <img class="isdefault" style="display:block" id="is-like-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/like.png" alt=""> <span id="spanCount" class="count "> 0 </span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">点赞</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active is-unlike" id="is-unlike"> <a class="tool-item-href"> <img class="isactive" style="margin-right:0px;display:none" id="is-unlike-imgactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/unlike-active.png" alt=""> <img class="isdefault" style="margin-right:0px;display:block" id="is-unlike-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/unlike.png" alt=""> <span id="unlikeCount" class="count "></span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">踩</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active is-collection "> <a class="tool-item-href" href="javascript:;" data-report-click="{&quot;mod&quot;:&quot;popu_824&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4130&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img style="display:none" id="is-collection-img-collection" class="animation-dom active-animation" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/collect-active.png" alt=""> <img class="isdefault" id="is-collection-img" style="display:block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/collect.png" alt=""> <img class="isactive" id="is-collection-imgactive" style="display:none" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newCollectActive.png" alt=""> <span class="count get-collection " data-num="0" id="get-collection"> 0 </span> </a> 
+          <div class="tool-hover-tip collect"> 
+           <div class="collect-operate-box"> 
+            <span class="collect-text" id="is-collection"> 收藏 </span> 
+           </div> 
+          </div> 
+          <div class="tool-active-list"> 
+           <div class="text">
+             觉得还不错? 
+            <span class="collect-text" id="tool-active-list-collection"> 一键收藏 </span> 
+            <img id="tool-active-list-close" src="https://csdnimg.cn/release/blogv2/dist/pc/img/collectionCloseWhite.png" alt=""> 
+           </div> 
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active tool-item-comment"> 
+          <div class="guide-rr-first"> 
+           <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/guideRedReward01.png" alt=""> 
+           <button class="btn-guide-known">知道了</button> 
+          </div> <a class="tool-item-href go-side-comment" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.7009&quot;}"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/comment.png" alt=""> <span class="count"> 0 </span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">评论</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active tool-QRcode" data-type="article" id="tool-share"> <a class="tool-item-href" href="javascript:;" data-report-view="{&quot;spm&quot;:&quot;3001.4129&quot;,&quot;extra&quot;:{&quot;type&quot;:&quot;blogdetail&quot;}}"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/share.png" alt=""> <span class="count">分享</span> </a> 
+          <div class="QRcode" id="tool-QRcode"> 
+           <div class="share-bg-box"> 
+            <div class="share-content"> 
+             <a id="copyPosterUrl" data-type="link" class="btn-share">复制链接</a> 
+            </div> 
+            <div class="share-content"> 
+             <a class="btn-share" data-type="qq">分享到 QQ</a> 
+            </div> 
+            <div class="share-content"> 
+             <a class="btn-share" data-type="weibo">分享到新浪微博</a> 
+            </div> 
+            <div class="share-code"> 
+             <div class="share-code-box" id="shareCode"></div> 
+             <div class="share-code-text"> 
+              <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/share/icon-wechat.png" alt="">扫一扫 
+             </div> 
+            </div> 
+           </div> 
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active tool-item-reward"> <a class="tool-item-href" href="javascript:;" data-report-click="{&quot;mod&quot;:&quot;popu_830&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4237&quot;,&quot;dest&quot;:&quot;&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img class="isdefault reward-bt" id="rewardBtNew" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/reward.png" alt="打赏"> <span class="count">打赏</span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">打赏</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active is-more" id="is-more"> <a class="tool-item-href"> <img class="isdefault" style="margin-right:0px;display:block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/more.png" alt=""> <span class="count"></span> </a> 
+          <div class="more-opt-box"> 
+           <div class="mini-box"> 
+            <a class="tool-item-href" id="rewardBtNewHide" data-report-click="{&quot;spm&quot;:&quot;3001.4237&quot;,&quot;extra&quot;:&quot;{\&quot;type\&quot;:\&quot;hide\&quot;}&quot;}"> <img class="isdefault reward-bt" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/reward.png" alt="打赏"> <span class="count">打赏</span> </a> 
+            <a class="tool-item-href" id="toolReportBtnHide"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/report.png" alt=""> <span class="count">举报</span> </a> 
+           </div> 
+           <div class="normal-box"> 
+            <a class="tool-item-href" id="toolReportBtnHideNormal"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/report.png" alt=""> <span class="count">举报</span> </a> 
+           </div> 
+          </div> </li> 
+        </ul> 
+       </div> 
+       <div class="toolbox-right"> 
+        <div class="tool-directory"> 
+         <a class="bt-columnlist-show" data-id="12112329" data-free="false" data-description="自然语言处理" data-subscribe="true" data-title="大模型专题系列" data-img="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_224,w_224" data-url="https://blog.csdn.net/qq_39698985/category_12112329.html" data-sum="111" data-people="15" data-price="49.90" data-hotrank="0" data-status="true" data-oldprice="99.00" data-join="true" data-studyvip="true" data-studysubscribe="true" data-report-view="{&quot;spm&quot;:&quot;1001.2101.3001.6334&quot;,&quot;extend1&quot;:&quot;专栏目录&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.6334&quot;,&quot;extend1&quot;:&quot;专栏目录&quot;}">专栏目录</a> 
+        </div> 
+        <div class="tool-column"> 
+         <a class="tool-bt-button tool-unbt-subscribe" href="javascript:;" data-report-view="{&quot;mod&quot;:&quot;1592215036_001&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4405&quot;,&quot;extend1&quot;:&quot;已订阅&quot;}" data-report-click="{&quot;mod&quot;:&quot;1592215036_001&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4405&quot;,&quot;extend1&quot;:&quot;已订阅&quot;}">已订阅</a> 
+        </div> 
+       </div> 
+      </div> 
+     </div>    
+     <a id="commentBox" name="commentBox"></a> 
+    </main> 
+   </div> 
+   <div class="recommend-right1  align-items-stretch clearfix" id="rightAsideConcision" data-type="recommend"> 
+    <aside class="recommend-right_aside"> 
+     <div id="recommend-right-concision"> 
+      <div class="flex-column aside-box groupfile" id="groupfileConcision"> 
+       <div class="groupfile-div1"> 
+        <h3 class="aside-title">目录</h3> 
+        <div class="align-items-stretch group_item"> 
+         <div class="pos-box"> 
+          <div class="scroll-box"> 
+           <div class="toc-box"></div> 
+          </div> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+    </aside> 
+   </div> 
+  </div> 
+  <div class="mask-dark"></div> 
+  <div class="skin-boxshadow"></div> 
+  <div class="directory-boxshadow"></div> 
+  <div style="display:none;"> 
+   <img src="" onerror="setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){var test=&quot;\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74&quot;}},3000);"> 
+  </div> 
+  <div class="keyword-dec-box" id="keywordDecBox"></div> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css">        
+  <link rel="stylesheet" href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css"> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-dark.css">                  
+ </body>
+</html>

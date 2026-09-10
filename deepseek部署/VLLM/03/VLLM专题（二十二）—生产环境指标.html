@@ -1,0 +1,569 @@
+<!doctype html>
+<html lang="zh-CN">
+ <head> 
+  <meta charset="utf-8"> 
+  <link rel="canonical" href="https://blog.csdn.net/qq_39698985/article/details/146308158"> 
+  <meta http-equiv="content-type" content="text/html; charset=utf-8"> 
+  <meta name="renderer" content="webkit"> 
+  <meta name="force-rendering" content="webkit"> 
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1"> 
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, minimum-scale=1.0, maximum-scale=1.0, user-scalable=no"> 
+  <meta name="report" content="{&quot;pid&quot;: &quot;blog&quot;, &quot;spm&quot;:&quot;1001.2101&quot;}"> 
+  <meta name="referrer" content="always"> 
+  <meta http-equiv="Cache-Control" content="no-siteapp">
+  <link rel="alternate" media="handheld" href="#">  
+  <meta name="applicable-device" content="pc"> 
+  <link href="https://g.csdnimg.cn/static/logo/favicon32.ico" rel="shortcut icon" type="image/x-icon"> 
+  <title>VLLM专题（二十二）—生产环境指标_vllm metrics-CSDN博客</title>   
+  <meta name="keywords" content="vllm metrics"> 
+  <meta name="csdn-baidu-search" content="{&quot;autorun&quot;:true,&quot;install&quot;:true,&quot;keyword&quot;:&quot;vllm metrics&quot;}"> 
+  <meta name="description" content="文章浏览阅读235次。vLLM 提供了许多可用于监控系统健康状况的指标。这些指标通过 vLLM OpenAI 兼容 API 服务器的。：当指标在版本 X.Y 中被弃用时，它们会在版本 X.Y+1 中被隐藏，但可以使用。参数重新启用，然后在版本 X.Y+2 中完全移除。_vllm metrics"> 
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/release/blogv2/dist/pc/css/detail_enter-98c4414736.min.css"> 
+  <style>
+        #content_views{
+            -webkit-touch-callout: none;
+            -webkit-user-select: none;
+            -khtml-user-select: none;
+            -moz-user-select: none;
+            -ms-user-select: none; 
+            user-select: none; 
+        }
+    </style>  
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/release/blogv2/dist/pc/themesSkin/skin-yellow/skin-yellow-28d34ab5fa.min.css">    
+  <meta name="toolbar" content="{&quot;type&quot;:&quot;0&quot;,&quot;fixModel&quot;:&quot;1&quot;}">    
+  <link rel="stylesheet" type="text/css" href="https://csdnimg.cn/public/sandalstrap/1.4/css/sandalstrap.min.css"> 
+  <style>
+        .MathJax, .MathJax_Message, .MathJax_Preview{
+            display: none
+        }
+    </style>      
+ 	<style>
+	main div.blog-content-box pre {
+		max-height: 100%;
+		overflow-y: hidden;
+	}
+	</style>
+ </head>  
+ <body class="nodata  " style=""> 
+  <div id="toolbarBox" style="min-height: 48px;"></div>    
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/pc/css/blog_code-01256533b5.min.css"> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/chart-3456820cac.css"> 
+  <link rel="stylesheet" href="https://g.csdnimg.cn/lib/swiper/6.0.4/css/swiper.css">   
+  <div class="main_father clearfix d-flex justify-content-center mainfather-concision" style="height:100%;"> 
+   <div class="container clearfix container-concision" id="mainBox">  
+    <main>  
+     <div class="blog-content-box"> 
+      <div class="article-header-box"> 
+       <div class="article-header"> 
+        <div class="article-title-box"> 
+         <h1 class="title-article" id="articleContentId">VLLM专题（二十二）—生产环境指标</h1> 
+        </div> 
+        <div class="article-info-box"> 
+         <div class="article-bar-top"> 
+          <img class="article-type-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/original.png" alt=""> 
+          <div class="bar-content"> 
+           <a class="follow-nickName " href="https://blog.csdn.net/qq_39698985" target="_blank" rel="noopener" title="AI专题精讲">AI专题精讲</a> 
+           <img class="article-time-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newUpTime2.png" alt=""> 
+           <span class="time">已于&nbsp;2025-03-19 10:30:20&nbsp;修改</span> 
+           <div class="read-count-box"> 
+            <img class="article-read-img article-heard-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/articleReadEyes2.png" alt=""> 
+            <span class="read-count">阅读量235</span> 
+            <a id="blog_detail_zk_collection" class="un-collection" data-report-click="{&quot;mod&quot;:&quot;popu_823&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4232&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img class="article-collect-img article-heard-img un-collect-status isdefault" style="display:inline-block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollect2.png" alt=""> <img class="article-collect-img article-heard-img collect-status isactive" style="display:none" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarCollectionActive2.png" alt=""> <span class="name">收藏</span> <span class="get-collection"> 1 </span> </a> 
+            <div class="read-count-box is-like" data-type="top"> 
+             <img class="article-read-img article-heard-img" style="display:none" id="is-like-imgactive-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Active.png" alt=""> 
+             <img class="article-read-img article-heard-img" style="display:block" id="is-like-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newHeart2023Black.png" alt=""> 
+             <span class="read-count" id="blog-digg-num">点赞数 </span> 
+            </div> 
+           </div> 
+          </div> 
+         </div> 
+         <div class="blog-tags-box"> 
+          <div class="tags-box artic-tag-box"> 
+           <span class="label">分类专栏：</span> 
+           <a class="tag-link" href="https://blog.csdn.net/qq_39698985/category_12112329.html" target="_blank" rel="noopener">大模型专题系列</a> 
+           <span class="label">文章标签：</span> 
+           <a rel="noopener" data-report-query="spm=1001.2101.3001.4223" data-report-click="{&quot;mod&quot;:&quot;popu_626&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4223&quot;,&quot;strategy&quot;:&quot;人工智能&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;extra&quot;:&quot;{\&quot;searchword\&quot;:\&quot;人工智能\&quot;}&quot;}" data-report-view="{&quot;mod&quot;:&quot;popu_626&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4223&quot;,&quot;strategy&quot;:&quot;人工智能&quot;,&quot;ab&quot;:&quot;new&quot;,&quot;extra&quot;:&quot;{\&quot;searchword\&quot;:\&quot;人工智能\&quot;}&quot;}" class="tag-link" href="https://so.csdn.net/so/search/s.do?q=%E4%BA%BA%E5%B7%A5%E6%99%BA%E8%83%BD&amp;t=all&amp;o=vip&amp;s=&amp;l=&amp;f=&amp;viparticle=&amp;from_tracking_code=tag_word&amp;from_code=app_blog_art" target="_blank">人工智能</a> 
+          </div> 
+         </div> 
+         <div class="up-time">
+          <span>于&nbsp;2025-03-17 14:04:08&nbsp;首次发布</span>
+         </div> 
+         <div class="slide-content-box"> 
+          <div class="article-copyright"> 
+           <div class="creativecommons">
+             版权声明：本文为博主原创文章，遵循
+            <a href="http://creativecommons.org/licenses/by-sa/4.0/" target="_blank" rel="noopener"> CC 4.0 BY-SA </a>版权协议，转载请附上原文出处链接和本声明。 
+           </div> 
+           <div class="article-source-link">
+             本文链接：
+            <a href="https://blog.csdn.net/qq_39698985/article/details/146308158" target="_blank">https://blog.csdn.net/qq_39698985/article/details/146308158</a> 
+           </div> 
+          </div> 
+         </div> 
+         <div class="operating"> 
+          <a class="href-article-edit slide-toggle">版权</a> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+      <div id="blogHuaweiyunAdvert" class=""></div> 
+      <div id="blogColumnPayAdvert" class=""> 
+       <div class="column-group"> 
+        <div class="column-group-item column-group0 column-group-item-one"> 
+         <div class="item-l"> 
+          <a class="item-target" href="https://blog.csdn.net/qq_39698985/category_12112329.html" target="_blank" title="大模型专题系列" data-report-view="{&quot;spm&quot;:&quot;1001.2101.3001.6332&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.6332&quot;}"> <img class="item-target" src="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_224,w_224" alt=""> <span class="title item-target"> <span> <span class="tit">大模型专题系列</span> <span class="dec">专栏收录该内容</span> </span> </span> </a> 
+         </div> 
+         <div class="item-m"> 
+          <span>111 篇文章</span> 
+          <span class="old-add-new-box"> <span class="price">¥49.90</span> <span class="oldprice">¥99.00</span> </span> 
+         </div> 
+         <div class="item-r"> 
+          <a class="item-target article-column-subscribe">已订阅 </a> 
+          <a class="item-target column-studyvip-discount column-studyvip-pass" data-report-view="{&quot;spm&quot;:&quot;1001.2015.3001.8590&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2015.3001.8590&quot;}">8折续费 </a> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+      <div class="learning_the_member_box"> 
+       <a href="https://www.csdn.net/vip?utm_source=bkzl_cjhy_ckqy" target="_blank"> 
+        <div class="left">
+         <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/iconVIpCrown.png" alt="">
+         <span>您已是超级会员，正在免费阅读会员专享内容</span>
+        </div> 
+        <div class="right">
+         <span>查看更多超级会员权益</span>
+         <img src="https://csdnimg.cn/release/blogv2/dist/components/img/vipIconArrowLeftWhite.png" alt="">
+        </div> </a> 
+      </div> 
+      <article class="baidu_pl"> 
+       <div id="article_content" class="article_content clearfix"> 
+        <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/kdoc_html_views-1a98987dfd.css"> 
+        <link rel="stylesheet" href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/ck_htmledit_views-704d5b9767.css"> 
+        <div id="content_views" class="markdown_views prism-dracula"> 
+         <svg xmlns="http://www.w3.org/2000/svg" style="display: none;"> 
+          <path stroke-linecap="round" d="M5,0 0,2.5 5,5z" id="raphael-marker-block" style="-webkit-tap-highlight-color: rgba(0, 0, 0, 0);"></path> 
+         </svg> 
+         <p>vLLM 提供了许多可用于监控系统健康状况的指标。这些指标通过 vLLM OpenAI 兼容 API 服务器的 <code>/metrics</code > 端点公开。</p> 
+         <p>你可以使用 Python 或 Docker 启动服务器：</p> 
+         <pre><code class="prism language-bash">vllm serve unsloth/Llama-3.2-1B-Instruct
+</code ></pre> 
+         <p>然后查询该端点以从服务器获取最新的指标：<br> <img src="https://i-blog.csdnimg.cn/direct/d4a07d0f16444ad99f05b7c3d684b79c.png" alt="在这里插入图片描述"><br> 以下是公开的指标：</p> 
+         <pre><code  style="height: 50vh;" class="prism language-python"><span class="token keyword">class</span> <span class="token class-name">Metrics</span><span class="token punctuation">:</span>
+    <span class="token triple-quoted-string string">"""
+    vLLM uses a multiprocessing-based frontend for the OpenAI server.
+    This means that we need to run prometheus_client in multiprocessing mode
+    See https://prometheus.github.io/client_python/multiprocess/ for more
+    details on limitations.
+    """</span>
+
+    labelname_finish_reason <span class="token operator">=</span> <span class="token string">"finished_reason"</span>
+    labelname_waiting_lora_adapters <span class="token operator">=</span> <span class="token string">"waiting_lora_adapters"</span>
+    labelname_running_lora_adapters <span class="token operator">=</span> <span class="token string">"running_lora_adapters"</span>
+    labelname_max_lora <span class="token operator">=</span> <span class="token string">"max_lora"</span>
+    _gauge_cls <span class="token operator">=</span> prometheus_client<span class="token punctuation">.</span>Gauge
+    _counter_cls <span class="token operator">=</span> prometheus_client<span class="token punctuation">.</span>Counter
+    _histogram_cls <span class="token operator">=</span> prometheus_client<span class="token punctuation">.</span>Histogram
+
+    <span class="token keyword">def</span> <span class="token function">__init__</span><span class="token punctuation">(</span>self<span class="token punctuation">,</span> labelnames<span class="token punctuation">:</span> List<span class="token punctuation">[</span><span class="token builtin">str</span><span class="token punctuation">]</span><span class="token punctuation">,</span> vllm_config<span class="token punctuation">:</span> VllmConfig<span class="token punctuation">)</span><span class="token punctuation">:</span>
+        <span class="token comment"># Unregister any existing vLLM collectors (for CI/CD)</span>
+        self<span class="token punctuation">.</span>_unregister_vllm_metrics<span class="token punctuation">(</span><span class="token punctuation">)</span>
+
+        max_model_len <span class="token operator">=</span> vllm_config<span class="token punctuation">.</span>model_config<span class="token punctuation">.</span>max_model_len
+
+        <span class="token comment"># System stats</span>
+        <span class="token comment">#   Scheduler State</span>
+        self<span class="token punctuation">.</span>gauge_scheduler_running <span class="token operator">=</span> self<span class="token punctuation">.</span>_gauge_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:num_requests_running"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Number of requests currently running on GPU."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            multiprocess_mode<span class="token operator">=</span><span class="token string">"sum"</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>gauge_scheduler_waiting <span class="token operator">=</span> self<span class="token punctuation">.</span>_gauge_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:num_requests_waiting"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Number of requests waiting to be processed."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            multiprocess_mode<span class="token operator">=</span><span class="token string">"sum"</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>gauge_lora_info <span class="token operator">=</span> self<span class="token punctuation">.</span>_gauge_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:lora_requests_info"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Running stats on lora requests."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span><span class="token punctuation">[</span>
+                self<span class="token punctuation">.</span>labelname_running_lora_adapters<span class="token punctuation">,</span>
+                self<span class="token punctuation">.</span>labelname_max_lora<span class="token punctuation">,</span>
+                self<span class="token punctuation">.</span>labelname_waiting_lora_adapters<span class="token punctuation">,</span>
+            <span class="token punctuation">]</span><span class="token punctuation">,</span>
+            multiprocess_mode<span class="token operator">=</span><span class="token string">"livemostrecent"</span><span class="token punctuation">,</span>
+        <span class="token punctuation">)</span>
+
+        <span class="token comment"># Deprecated in 0.8 - KV cache offloading is not used in V1</span>
+        <span class="token comment"># TODO: in 0.9, only enable if show_hidden_metrics=True</span>
+        self<span class="token punctuation">.</span>gauge_scheduler_swapped <span class="token operator">=</span> self<span class="token punctuation">.</span>_gauge_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:num_requests_swapped"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token punctuation">(</span>
+                <span class="token string">"Number of requests swapped to CPU. "</span>
+                <span class="token string">"DEPRECATED: KV cache offloading is not used in V1"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            multiprocess_mode<span class="token operator">=</span><span class="token string">"sum"</span><span class="token punctuation">)</span>
+
+        <span class="token comment">#   KV Cache Usage in %</span>
+        self<span class="token punctuation">.</span>gauge_gpu_cache_usage <span class="token operator">=</span> self<span class="token punctuation">.</span>_gauge_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:gpu_cache_usage_perc"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"GPU KV-cache usage. 1 means 100 percent usage."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            multiprocess_mode<span class="token operator">=</span><span class="token string">"sum"</span><span class="token punctuation">)</span>
+
+        <span class="token comment"># Deprecated in 0.8 - KV cache offloading is not used in V1</span>
+        <span class="token comment"># TODO: in 0.9, only enable if show_hidden_metrics=True</span>
+        self<span class="token punctuation">.</span>gauge_cpu_cache_usage <span class="token operator">=</span> self<span class="token punctuation">.</span>_gauge_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:cpu_cache_usage_perc"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token punctuation">(</span>
+                <span class="token string">"CPU KV-cache usage. 1 means 100 percent usage. "</span>
+                <span class="token string">"DEPRECATED: KV cache offloading is not used in V1"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            multiprocess_mode<span class="token operator">=</span><span class="token string">"sum"</span><span class="token punctuation">)</span>
+
+        <span class="token comment"># Deprecated in 0.8 - KV cache offloading is not used in V1</span>
+        <span class="token comment"># TODO: in 0.9, only enable if show_hidden_metrics=True</span>
+        self<span class="token punctuation">.</span>gauge_cpu_prefix_cache_hit_rate <span class="token operator">=</span> self<span class="token punctuation">.</span>_gauge_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:cpu_prefix_cache_hit_rate"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token punctuation">(</span>
+                <span class="token string">"CPU prefix cache block hit rate. "</span>
+                <span class="token string">"DEPRECATED: KV cache offloading is not used in V1"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            multiprocess_mode<span class="token operator">=</span><span class="token string">"sum"</span><span class="token punctuation">)</span>
+
+        <span class="token comment"># Deprecated in 0.8 - replaced by queries+hits counters in V1</span>
+        <span class="token comment"># TODO: in 0.9, only enable if show_hidden_metrics=True</span>
+        self<span class="token punctuation">.</span>gauge_gpu_prefix_cache_hit_rate <span class="token operator">=</span> self<span class="token punctuation">.</span>_gauge_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:gpu_prefix_cache_hit_rate"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token punctuation">(</span><span class="token string">"GPU prefix cache block hit rate. "</span>
+                           <span class="token string">"DEPRECATED: use vllm:gpu_prefix_cache_queries and "</span>
+                           <span class="token string">"vllm:gpu_prefix_cache_queries in V1"</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            multiprocess_mode<span class="token operator">=</span><span class="token string">"sum"</span><span class="token punctuation">)</span>
+
+        <span class="token comment"># Iteration stats</span>
+        self<span class="token punctuation">.</span>counter_num_preemption <span class="token operator">=</span> self<span class="token punctuation">.</span>_counter_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:num_preemptions_total"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Cumulative number of preemption from the engine."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>counter_prompt_tokens <span class="token operator">=</span> self<span class="token punctuation">.</span>_counter_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:prompt_tokens_total"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Number of prefill tokens processed."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>counter_generation_tokens <span class="token operator">=</span> self<span class="token punctuation">.</span>_counter_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:generation_tokens_total"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Number of generation tokens processed."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">)</span>
+        buckets <span class="token operator">=</span> <span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">8</span><span class="token punctuation">,</span> <span class="token number">16</span><span class="token punctuation">,</span> <span class="token number">32</span><span class="token punctuation">,</span> <span class="token number">64</span><span class="token punctuation">,</span> <span class="token number">128</span><span class="token punctuation">,</span> <span class="token number">256</span><span class="token punctuation">,</span> <span class="token number">512</span><span class="token punctuation">,</span> <span class="token number">1024</span><span class="token punctuation">,</span> <span class="token number">2048</span><span class="token punctuation">,</span> <span class="token number">4096</span><span class="token punctuation">,</span> <span class="token number">8096</span><span class="token punctuation">]</span>
+        <span class="token keyword">if</span> <span class="token keyword">not</span> vllm_config<span class="token punctuation">.</span>model_config<span class="token punctuation">.</span>enforce_eager<span class="token punctuation">:</span>
+            buckets <span class="token operator">=</span> vllm_config<span class="token punctuation">.</span>compilation_config<span class="token punctuation">.</span>\
+                cudagraph_capture_sizes<span class="token punctuation">.</span>copy<span class="token punctuation">(</span><span class="token punctuation">)</span>
+            buckets<span class="token punctuation">.</span>sort<span class="token punctuation">(</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>histogram_iteration_tokens <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:iteration_tokens_total"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Histogram of number of tokens per engine_step."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span>buckets<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>histogram_time_to_first_token <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:time_to_first_token_seconds"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Histogram of time to first token in seconds."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span><span class="token punctuation">[</span>
+                <span class="token number">0.001</span><span class="token punctuation">,</span> <span class="token number">0.005</span><span class="token punctuation">,</span> <span class="token number">0.01</span><span class="token punctuation">,</span> <span class="token number">0.02</span><span class="token punctuation">,</span> <span class="token number">0.04</span><span class="token punctuation">,</span> <span class="token number">0.06</span><span class="token punctuation">,</span> <span class="token number">0.08</span><span class="token punctuation">,</span> <span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.25</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">,</span>
+                <span class="token number">0.75</span><span class="token punctuation">,</span> <span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token number">2.5</span><span class="token punctuation">,</span> <span class="token number">5.0</span><span class="token punctuation">,</span> <span class="token number">7.5</span><span class="token punctuation">,</span> <span class="token number">10.0</span>
+            <span class="token punctuation">]</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>histogram_time_per_output_token <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:time_per_output_token_seconds"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Histogram of time per output token in seconds."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span><span class="token punctuation">[</span>
+                <span class="token number">0.01</span><span class="token punctuation">,</span> <span class="token number">0.025</span><span class="token punctuation">,</span> <span class="token number">0.05</span><span class="token punctuation">,</span> <span class="token number">0.075</span><span class="token punctuation">,</span> <span class="token number">0.1</span><span class="token punctuation">,</span> <span class="token number">0.15</span><span class="token punctuation">,</span> <span class="token number">0.2</span><span class="token punctuation">,</span> <span class="token number">0.3</span><span class="token punctuation">,</span> <span class="token number">0.4</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">,</span> <span class="token number">0.75</span><span class="token punctuation">,</span>
+                <span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token number">2.5</span>
+            <span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+        <span class="token comment"># Request stats</span>
+        <span class="token comment">#   Latency</span>
+        request_latency_buckets <span class="token operator">=</span> <span class="token punctuation">[</span>
+            <span class="token number">0.3</span><span class="token punctuation">,</span> <span class="token number">0.5</span><span class="token punctuation">,</span> <span class="token number">0.8</span><span class="token punctuation">,</span> <span class="token number">1.0</span><span class="token punctuation">,</span> <span class="token number">1.5</span><span class="token punctuation">,</span> <span class="token number">2.0</span><span class="token punctuation">,</span> <span class="token number">2.5</span><span class="token punctuation">,</span> <span class="token number">5.0</span><span class="token punctuation">,</span> <span class="token number">10.0</span><span class="token punctuation">,</span> <span class="token number">15.0</span><span class="token punctuation">,</span> <span class="token number">20.0</span><span class="token punctuation">,</span> <span class="token number">30.0</span><span class="token punctuation">,</span>
+            <span class="token number">40.0</span><span class="token punctuation">,</span> <span class="token number">50.0</span><span class="token punctuation">,</span> <span class="token number">60.0</span>
+        <span class="token punctuation">]</span>
+        self<span class="token punctuation">.</span>histogram_e2e_time_request <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:e2e_request_latency_seconds"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Histogram of end to end request latency in seconds."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span>request_latency_buckets<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>histogram_queue_time_request <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:request_queue_time_seconds"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span>
+            <span class="token string">"Histogram of time spent in WAITING phase for request."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span>request_latency_buckets<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>histogram_inference_time_request <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:request_inference_time_seconds"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span>
+            <span class="token string">"Histogram of time spent in RUNNING phase for request."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span>request_latency_buckets<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>histogram_prefill_time_request <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:request_prefill_time_seconds"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span>
+            <span class="token string">"Histogram of time spent in PREFILL phase for request."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span>request_latency_buckets<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>histogram_decode_time_request <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:request_decode_time_seconds"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span>
+            <span class="token string">"Histogram of time spent in DECODE phase for request."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span>request_latency_buckets<span class="token punctuation">)</span>
+        <span class="token comment"># Deprecated in 0.8 - duplicates vllm:request_queue_time_seconds:</span>
+        <span class="token comment"># TODO: in 0.9, only enable if show_hidden_metrics=True</span>
+        self<span class="token punctuation">.</span>histogram_time_in_queue_request <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:time_in_queue_requests"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token punctuation">(</span>
+                <span class="token string">"Histogram of time the request spent in the queue in seconds. "</span>
+                <span class="token string">"DEPRECATED: use vllm:request_queue_time_seconds instead."</span><span class="token punctuation">)</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span>request_latency_buckets<span class="token punctuation">)</span>
+
+        <span class="token comment"># Deprecated in 0.8 - use prefill/decode/inference time metrics</span>
+        <span class="token comment"># TODO: in 0.9, only enable if show_hidden_metrics=True</span>
+        self<span class="token punctuation">.</span>histogram_model_forward_time_request <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:model_forward_time_milliseconds"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token punctuation">(</span>
+                <span class="token string">"Histogram of time spent in the model forward pass in ms. "</span>
+                <span class="token string">"DEPRECATED: use prefill/decode/inference time metrics instead."</span>
+            <span class="token punctuation">)</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span>build_1_2_3_5_8_buckets<span class="token punctuation">(</span><span class="token number">3000</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>histogram_model_execute_time_request <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:model_execute_time_milliseconds"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token punctuation">(</span>
+                <span class="token string">"Histogram of time spent in the model execute function in ms."</span>
+                <span class="token string">"DEPRECATED: use prefill/decode/inference time metrics instead."</span>
+            <span class="token punctuation">)</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span>build_1_2_3_5_8_buckets<span class="token punctuation">(</span><span class="token number">3000</span><span class="token punctuation">)</span><span class="token punctuation">)</span>
+
+        <span class="token comment">#   Metadata</span>
+        self<span class="token punctuation">.</span>histogram_num_prompt_tokens_request <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:request_prompt_tokens"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Number of prefill tokens processed."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span>build_1_2_5_buckets<span class="token punctuation">(</span>max_model_len<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>histogram_num_generation_tokens_request <span class="token operator">=</span> \
+            self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+                name<span class="token operator">=</span><span class="token string">"vllm:request_generation_tokens"</span><span class="token punctuation">,</span>
+                documentation<span class="token operator">=</span><span class="token string">"Number of generation tokens processed."</span><span class="token punctuation">,</span>
+                labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+                buckets<span class="token operator">=</span>build_1_2_5_buckets<span class="token punctuation">(</span>max_model_len<span class="token punctuation">)</span><span class="token punctuation">,</span>
+            <span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>histogram_max_num_generation_tokens_request <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:request_max_num_generation_tokens"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span>
+            <span class="token string">"Histogram of maximum number of requested generation tokens."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span>build_1_2_5_buckets<span class="token punctuation">(</span>max_model_len<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>histogram_n_request <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:request_params_n"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Histogram of the n request parameter."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span><span class="token punctuation">[</span><span class="token number">1</span><span class="token punctuation">,</span> <span class="token number">2</span><span class="token punctuation">,</span> <span class="token number">5</span><span class="token punctuation">,</span> <span class="token number">10</span><span class="token punctuation">,</span> <span class="token number">20</span><span class="token punctuation">]</span><span class="token punctuation">,</span>
+        <span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>histogram_max_tokens_request <span class="token operator">=</span> self<span class="token punctuation">.</span>_histogram_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:request_params_max_tokens"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Histogram of the max_tokens request parameter."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            buckets<span class="token operator">=</span>build_1_2_5_buckets<span class="token punctuation">(</span>max_model_len<span class="token punctuation">)</span><span class="token punctuation">,</span>
+        <span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>counter_request_success <span class="token operator">=</span> self<span class="token punctuation">.</span>_counter_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:request_success_total"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Count of successfully processed requests."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames <span class="token operator">+</span> <span class="token punctuation">[</span>Metrics<span class="token punctuation">.</span>labelname_finish_reason<span class="token punctuation">]</span><span class="token punctuation">)</span>
+
+        <span class="token comment"># Speculative decoding stats</span>
+        self<span class="token punctuation">.</span>gauge_spec_decode_draft_acceptance_rate <span class="token operator">=</span> self<span class="token punctuation">.</span>_gauge_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:spec_decode_draft_acceptance_rate"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Speulative token acceptance rate."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            multiprocess_mode<span class="token operator">=</span><span class="token string">"sum"</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>gauge_spec_decode_efficiency <span class="token operator">=</span> self<span class="token punctuation">.</span>_gauge_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:spec_decode_efficiency"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Speculative decoding system efficiency."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">,</span>
+            multiprocess_mode<span class="token operator">=</span><span class="token string">"sum"</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>counter_spec_decode_num_accepted_tokens <span class="token operator">=</span> <span class="token punctuation">(</span>self<span class="token punctuation">.</span>_counter_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:spec_decode_num_accepted_tokens_total"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Number of accepted tokens."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">)</span><span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>counter_spec_decode_num_draft_tokens <span class="token operator">=</span> self<span class="token punctuation">.</span>_counter_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:spec_decode_num_draft_tokens_total"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Number of draft tokens."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">)</span>
+        self<span class="token punctuation">.</span>counter_spec_decode_num_emitted_tokens <span class="token operator">=</span> <span class="token punctuation">(</span>self<span class="token punctuation">.</span>_counter_cls<span class="token punctuation">(</span>
+            name<span class="token operator">=</span><span class="token string">"vllm:spec_decode_num_emitted_tokens_total"</span><span class="token punctuation">,</span>
+            documentation<span class="token operator">=</span><span class="token string">"Number of emitted tokens."</span><span class="token punctuation">,</span>
+            labelnames<span class="token operator">=</span>labelnames<span class="token punctuation">)</span><span class="token punctuation">)</span>
+</code ></pre> 
+         <p>以下指标已被弃用，并将在未来版本中移除：</p> 
+         <ul>
+          <li><strong>vllm:num_requests_swapped</strong>、<strong>vllm:cpu_cache_usage_perc</strong> 和 <strong>vllm:cpu_prefix_cache_hit_rate</strong>：因为在 V1 中未使用 KV 缓存卸载功能。</li>
+          <li><strong>vllm:gpu_prefix_cache_hit_rate</strong>：在 V1 中被 <code>queries+hits</code > 计数器取代。</li>
+          <li><strong>vllm:time_in_queue_requests</strong>：因为它与 <code>vllm:request_queue_time_seconds</code > 重复。</li>
+          <li><strong>vllm:model_forward_time_milliseconds</strong> 和 <strong>vllm:model_execute_time_milliseconds</strong>：因为应改用预填充/解码/推理时间指标。</li>
+         </ul> 
+         <blockquote> 
+          <p><strong>注意</strong>：当指标在版本 X.Y 中被弃用时，它们会在版本 X.Y+1 中被隐藏，但可以使用 <code>--show-hidden-metrics-for-version=X.Y</code > 参数重新启用，然后在版本 X.Y+2 中完全移除。</p> 
+         </blockquote> 
+        </div> 
+        <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/editerView/markdown_views-a5d25dd831.css" rel="stylesheet"> 
+        <link href="https://csdnimg.cn/release/blogv2/dist/mdeditor/css/style-e504d6a974.css" rel="stylesheet"> 
+       </div> 
+       <div id="blogExtensionBox" style="margin-top:12px" class="blog-extension-box"></div> 
+      </article>  
+     </div> 
+     <div class="directory-boxshadow-dialog" style="display:none;"> 
+      <div class="directory-boxshadow-dialog-box"> 
+      </div> 
+      <div class="vip-limited-time-offer-box-new" id="vip-limited-time-offer-box-new"> 
+       <img class="limited-img limited-img-new" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-newWhite.png"> 
+       <div class="vip-limited-time-top">
+         确定要放弃本次机会？ 
+       </div> 
+       <span class="vip-limited-time-text">福利倒计时</span> 
+       <div class="limited-time-box-new"> 
+        <span class="time-hour"></span> 
+        <i>:</i> 
+        <span class="time-minite"></span> 
+        <i>:</i> 
+        <span class="time-second"></span> 
+       </div> 
+       <div class="limited-time-vip-box"> 
+        <p> <img class="coupon-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/vip-limited-close-roup.png"> <span class="def">立减 ¥</span> <span class="active limited-num"></span> </p> 
+        <span class="">普通VIP年卡可用</span> 
+       </div> 
+       <a class="limited-time-btn-new" href="https://mall.csdn.net/vip" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.9621&quot;}" data-report-query="spm=1001.2101.3001.9621">立即使用</a> 
+      </div> 
+     </div> 
+     <div class="more-toolbox-new more-toolbar" id="toolBarBox"> 
+      <div class="left-toolbox"> 
+       <div class="toolbox-left"> 
+        <div class="profile-box"> 
+         <a class="profile-href" target="_blank" href="https://blog.csdn.net/qq_39698985"><img class="profile-img" src="https://i-avatar.csdnimg.cn/ab62205193b84b71b0ffc27cb2042a93_qq_39698985.jpg!1"> <span class="profile-name"> AI专题精讲 </span> </a> 
+        </div> 
+        <div class="profile-attend"> 
+         <a class="tool-attend tool-bt-button tool-bt-attend" href="javascript:;" data-report-view="{&quot;mod&quot;:&quot;1592215036_002&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4232&quot;,&quot;extend1&quot;:&quot;已关注&quot;}">已关注</a> 
+         <a class="tool-item-follow active-animation" style="display:none;">已关注</a> 
+        </div> 
+       </div> 
+       <div class="toolbox-middle"> 
+        <ul class="toolbox-list"> 
+         <li class="tool-item tool-item-size tool-active is-like" id="is-like" data-type="bottom"> <a class="tool-item-href"> <img style="display:none;" id="is-like-imgactive-animation-like" class="animation-dom active-animation" src="https://csdnimg.cn/release/blogv2/dist/pc/img/tobarThumbUpactive.png" alt=""> <img class="isactive" style="display:none" id="is-like-imgactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/like-active.png" alt=""> <img class="isdefault" style="display:block" id="is-like-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/like.png" alt=""> <span id="spanCount" class="count "> 0 </span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">点赞</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active is-unlike" id="is-unlike"> <a class="tool-item-href"> <img class="isactive" style="margin-right:0px;display:none" id="is-unlike-imgactive" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/unlike-active.png" alt=""> <img class="isdefault" style="margin-right:0px;display:block" id="is-unlike-img" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/unlike.png" alt=""> <span id="unlikeCount" class="count "></span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">踩</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active is-collection "> <a class="tool-item-href" href="javascript:;" data-report-click="{&quot;mod&quot;:&quot;popu_824&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4130&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img style="display:none" id="is-collection-img-collection" class="animation-dom active-animation" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/collect-active.png" alt=""> <img class="isdefault" id="is-collection-img" style="display:block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/collect.png" alt=""> <img class="isactive" id="is-collection-imgactive" style="display:none" src="https://csdnimg.cn/release/blogv2/dist/pc/img/newCollectActive.png" alt=""> <span class="count get-collection " data-num="1" id="get-collection"> 1 </span> </a> 
+          <div class="tool-hover-tip collect"> 
+           <div class="collect-operate-box"> 
+            <span class="collect-text" id="is-collection"> 收藏 </span> 
+           </div> 
+          </div> 
+          <div class="tool-active-list"> 
+           <div class="text">
+             觉得还不错? 
+            <span class="collect-text" id="tool-active-list-collection"> 一键收藏 </span> 
+            <img id="tool-active-list-close" src="https://csdnimg.cn/release/blogv2/dist/pc/img/collectionCloseWhite.png" alt=""> 
+           </div> 
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active tool-item-comment"> 
+          <div class="guide-rr-first"> 
+           <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/guideRedReward01.png" alt=""> 
+           <button class="btn-guide-known">知道了</button> 
+          </div> <a class="tool-item-href go-side-comment" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.7009&quot;}"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/comment.png" alt=""> <span class="count"> 0 </span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">评论</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active tool-QRcode" data-type="article" id="tool-share"> <a class="tool-item-href" href="javascript:;" data-report-view="{&quot;spm&quot;:&quot;3001.4129&quot;,&quot;extra&quot;:{&quot;type&quot;:&quot;blogdetail&quot;}}"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/share.png" alt=""> <span class="count">分享</span> </a> 
+          <div class="QRcode" id="tool-QRcode"> 
+           <div class="share-bg-box"> 
+            <div class="share-content"> 
+             <a id="copyPosterUrl" data-type="link" class="btn-share">复制链接</a> 
+            </div> 
+            <div class="share-content"> 
+             <a class="btn-share" data-type="qq">分享到 QQ</a> 
+            </div> 
+            <div class="share-content"> 
+             <a class="btn-share" data-type="weibo">分享到新浪微博</a> 
+            </div> 
+            <div class="share-code"> 
+             <div class="share-code-box" id="shareCode"></div> 
+             <div class="share-code-text"> 
+              <img src="https://csdnimg.cn/release/blogv2/dist/pc/img/share/icon-wechat.png" alt="">扫一扫 
+             </div> 
+            </div> 
+           </div> 
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active tool-item-reward"> <a class="tool-item-href" href="javascript:;" data-report-click="{&quot;mod&quot;:&quot;popu_830&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4237&quot;,&quot;dest&quot;:&quot;&quot;,&quot;ab&quot;:&quot;new&quot;}"> <img class="isdefault reward-bt" id="rewardBtNew" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/reward.png" alt="打赏"> <span class="count">打赏</span> </a> 
+          <div class="tool-hover-tip">
+           <span class="text space">打赏</span>
+          </div> </li> 
+         <li class="tool-item tool-item-size tool-active is-more" id="is-more"> <a class="tool-item-href"> <img class="isdefault" style="margin-right:0px;display:block" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/more.png" alt=""> <span class="count"></span> </a> 
+          <div class="more-opt-box"> 
+           <div class="mini-box"> 
+            <a class="tool-item-href" id="rewardBtNewHide" data-report-click="{&quot;spm&quot;:&quot;3001.4237&quot;,&quot;extra&quot;:&quot;{\&quot;type\&quot;:\&quot;hide\&quot;}&quot;}"> <img class="isdefault reward-bt" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/reward.png" alt="打赏"> <span class="count">打赏</span> </a> 
+            <a class="tool-item-href" id="toolReportBtnHide"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/report.png" alt=""> <span class="count">举报</span> </a> 
+           </div> 
+           <div class="normal-box"> 
+            <a class="tool-item-href" id="toolReportBtnHideNormal"> <img class="isdefault" src="https://csdnimg.cn/release/blogv2/dist/pc/img/toolbar/report.png" alt=""> <span class="count">举报</span> </a> 
+           </div> 
+          </div> </li> 
+        </ul> 
+       </div> 
+       <div class="toolbox-right"> 
+        <div class="tool-directory"> 
+         <a class="bt-columnlist-show" data-id="12112329" data-free="false" data-description="自然语言处理" data-subscribe="true" data-title="大模型专题系列" data-img="https://i-blog.csdnimg.cn/columns/default/20201014180756916.png?x-oss-process=image/resize,m_fixed,h_224,w_224" data-url="https://blog.csdn.net/qq_39698985/category_12112329.html" data-sum="111" data-people="15" data-price="49.90" data-hotrank="0" data-status="true" data-oldprice="99.00" data-join="true" data-studyvip="true" data-studysubscribe="true" data-report-view="{&quot;spm&quot;:&quot;1001.2101.3001.6334&quot;,&quot;extend1&quot;:&quot;专栏目录&quot;}" data-report-click="{&quot;spm&quot;:&quot;1001.2101.3001.6334&quot;,&quot;extend1&quot;:&quot;专栏目录&quot;}">专栏目录</a> 
+        </div> 
+        <div class="tool-column"> 
+         <a class="tool-bt-button tool-unbt-subscribe" href="javascript:;" data-report-view="{&quot;mod&quot;:&quot;1592215036_001&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4405&quot;,&quot;extend1&quot;:&quot;已订阅&quot;}" data-report-click="{&quot;mod&quot;:&quot;1592215036_001&quot;,&quot;spm&quot;:&quot;1001.2101.3001.4405&quot;,&quot;extend1&quot;:&quot;已订阅&quot;}">已订阅</a> 
+        </div> 
+       </div> 
+      </div> 
+     </div>    
+     <a id="commentBox" name="commentBox"></a> 
+    </main> 
+   </div> 
+   <div class="recommend-right1  align-items-stretch clearfix" id="rightAsideConcision" data-type="recommend"> 
+    <aside class="recommend-right_aside"> 
+     <div id="recommend-right-concision"> 
+      <div class="flex-column aside-box groupfile" id="groupfileConcision"> 
+       <div class="groupfile-div1"> 
+        <h3 class="aside-title">目录</h3> 
+        <div class="align-items-stretch group_item"> 
+         <div class="pos-box"> 
+          <div class="scroll-box"> 
+           <div class="toc-box"></div> 
+          </div> 
+         </div> 
+        </div> 
+       </div> 
+      </div> 
+     </div> 
+    </aside> 
+   </div> 
+  </div> 
+  <div class="mask-dark"></div> 
+  <div class="skin-boxshadow"></div> 
+  <div class="directory-boxshadow"></div> 
+  <div style="display:none;"> 
+   <img src="" onerror="setTimeout(function(){if(!/(csdn.net|iteye.com|baiducontent.com|googleusercontent.com|360webcache.com|sogoucdn.com|bingj.com|baidu.com)$/.test(window.location.hostname)){var test=&quot;\x68\x74\x74\x70\x73\x3a\x2f\x2f\x77\x77\x77\x2e\x63\x73\x64\x6e\x2e\x6e\x65\x74&quot;}},3000);"> 
+  </div> 
+  <div class="keyword-dec-box" id="keywordDecBox"></div> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/chart/chart.css">        
+  <link rel="stylesheet" href="https://g.csdnimg.cn/lib/cboxEditor/1.1.6/embed-editor.min.css"> 
+  <link rel="stylesheet" href="https://csdnimg.cn/release/blog_editor_html/release1.6.12/ckeditor/plugins/codesnippet/lib/highlight/styles/atom-one-dark.css">                  
+ </body>
+</html>
